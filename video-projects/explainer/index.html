@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Higgsfield Explainer</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden; background: #09090b;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #fff;
+        -webkit-font-smoothing: antialiased;
+      }
+      #main { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+      .lime { color: #d4ff3a; }
+      .dim { color: rgba(255,255,255,.62); }
+
+      /* Stage behind the footage */
+      #stage { position: absolute; inset: 0; background: #09090b; }
+      #stage::before {
+        content: ""; position: absolute; inset: 0;
+        background:
+          radial-gradient(60% 60% at 22% 45%, rgba(212,255,58,.10) 0%, rgba(212,255,58,0) 60%),
+          radial-gradient(50% 50% at 90% 110%, rgba(120,90,255,.10) 0%, rgba(120,90,255,0) 60%);
+      }
+      #stage-grid {
+        position: absolute; inset: 0; opacity: .35;
+        background-image: radial-gradient(rgba(255,255,255,.12) 1px, transparent 1px);
+        background-size: 32px 32px;
+      }
+
+      /* Footage wrapper: moved by transform + clip-path, video itself never resized */
+      #cam {
+        position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+        transform-origin: 0 0; clip-path: inset(0px 0px 0px 0px round 0px);
+      }
+      #a-roll { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      #cam-ring {
+        position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none;
+        transform-origin: 0 0; opacity: 0; border-radius: 44px;
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,.14);
+      }
+
+      #ui { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+      .scene { position: absolute; opacity: 0; }
+
+      /* Hook glass card */
+      #hook {
+        left: 80px; top: 300px; width: 560px; padding: 44px 48px; border-radius: 40px; overflow: hidden;
+        background: linear-gradient(145deg, rgba(34,34,40,.70), rgba(16,16,20,.62));
+        backdrop-filter: blur(30px) saturate(170%); -webkit-backdrop-filter: blur(30px) saturate(170%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 0 0 1px rgba(255,255,255,.14), 0 40px 90px rgba(0,0,0,.38);
+      }
+      #hook::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 70% at 12% 0%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%); }
+      .eyebrow { font-size: 20px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+      #hook-a { font-size: 76px; font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-top: 16px; }
+      #hook-b { font-size: 44px; font-weight: 700; letter-spacing: -.03em; margin-top: 8px; }
+      #hook-rule { height: 1px; background: rgba(255,255,255,.18); margin: 30px 0 24px; }
+      #hook-c { display: flex; align-items: center; gap: 14px; font-size: 30px; font-weight: 600; }
+      #hook-c .x { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,69,58,.18); color: #ff6b61; display: grid; place-items: center; font-size: 20px; font-weight: 800; }
+      #hook-c .txt { position: relative; color: rgba(255,255,255,.82); }
+      #hook-strike { position: absolute; left: -4px; right: -4px; top: 52%; height: 3px; background: #ff453a; transform-origin: 0 50%; }
+      #hook-d { margin-top: 18px; font-size: 26px; font-weight: 600; color: #d4ff3a; opacity: 0; }
+
+      /* Left column scenes */
+      .col { left: 110px; width: 880px; }
+      .chip {
+        display: inline-flex; align-items: center; gap: 12px; padding: 12px 22px 12px 14px; border-radius: 999px;
+        background: rgba(212,255,58,.12); box-shadow: inset 0 0 0 1px rgba(212,255,58,.35);
+        font-size: 24px; font-weight: 700; color: #d4ff3a; letter-spacing: -.01em;
+      }
+      .chip i { width: 32px; height: 32px; border-radius: 50%; background: #d4ff3a; display: grid; place-items: center; }
+      .chip i svg { width: 18px; height: 18px; }
+      .h1 { font-size: 72px; font-weight: 800; letter-spacing: -.045em; line-height: 1.02; margin-top: 22px; }
+      .panel { background: #141417; border-radius: 28px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 30px 80px rgba(0,0,0,.45); }
+
+      /* S1 intro */
+      #s1 { top: 250px; }
+      #s1-word { font-size: 132px; font-weight: 800; letter-spacing: -.055em; line-height: 1; }
+      #s1-word span { display: inline-block; opacity: 0; }
+      #s1-tag { font-size: 40px; font-weight: 600; letter-spacing: -.02em; margin-top: 18px; opacity: 0; }
+      #s1-pills { position: relative; margin-top: 56px; height: 300px; }
+      .pill {
+        position: absolute; left: 0; display: flex; align-items: center; gap: 18px; height: 80px; padding: 0 30px 0 16px;
+        border-radius: 999px; background: #17171b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+        font-size: 32px; font-weight: 650; letter-spacing: -.02em; opacity: 0;
+      }
+      .pill i { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.08); display: grid; place-items: center; }
+      .pill i svg { width: 26px; height: 26px; }
+      #p1 { top: 0; } #p2 { top: 100px; } #p3 { top: 200px; }
+      #p-one {
+        position: absolute; left: 0; top: 100px; height: 88px; padding: 0 36px 0 18px; display: flex; align-items: center; gap: 18px;
+        border-radius: 999px; background: #d4ff3a; color: #0b0b0d; font-size: 36px; font-weight: 800; letter-spacing: -.02em; opacity: 0;
+      }
+      #p-one i { width: 54px; height: 54px; border-radius: 50%; background: #0b0b0d; display: grid; place-items: center; }
+
+      /* S2 Cinema Studio */
+      #s2 { top: 215px; }
+      #s2-app { width: 880px; height: 560px; margin-top: 30px; padding: 22px; opacity: 0; }
+      #s2-view { position: relative; height: 380px; border-radius: 18px; overflow: hidden; background: #000; }
+      #s2-scene {
+        position: absolute; left: -10%; top: -10%; width: 120%; height: 120%;
+        background:
+          radial-gradient(30% 40% at 70% 38%, rgba(255,190,120,.95), rgba(255,120,60,.35) 45%, rgba(0,0,0,0) 70%),
+          linear-gradient(180deg, #1b2a4a 0%, #3b3f6e 38%, #c46a4a 62%, #2a1a1a 63%, #0e0a0a 100%);
+      }
+      #s2-mount { position: absolute; left: -10%; right: -10%; bottom: 0; height: 45%; background: linear-gradient(180deg, #120c10, #050304); clip-path: polygon(0 60%, 18% 20%, 32% 55%, 48% 10%, 64% 50%, 80% 25%, 100% 55%, 100% 100%, 0 100%); }
+      .letterbox { position: absolute; left: 0; right: 0; height: 36px; background: #000; }
+      #s2-rec { position: absolute; left: 24px; top: 50px; display: flex; gap: 10px; align-items: center; font-size: 18px; font-weight: 700; letter-spacing: .1em; }
+      #s2-rec b { width: 12px; height: 12px; border-radius: 50%; background: #ff453a; }
+      #s2-reticle { position: absolute; left: 50%; top: 50%; width: 150px; height: 96px; margin: -48px 0 0 -75px; opacity: 0; }
+      #s2-reticle::before, #s2-reticle::after { content: ""; position: absolute; inset: 0; border: 2px solid rgba(255,255,255,.9); border-radius: 6px; clip-path: polygon(0 0, 22% 0, 22% 4%, 4% 4%, 4% 22%, 0 22%, 0 78%, 4% 78%, 4% 96%, 22% 96%, 22% 100%, 78% 100%, 78% 96%, 96% 96%, 96% 78%, 100% 78%, 100% 22%, 96% 22%, 96% 4%, 78% 4%, 78% 0); }
+      #s2-cam { position: absolute; right: 22px; top: 50px; padding: 10px 16px; border-radius: 12px; background: rgba(0,0,0,.55); font-size: 18px; font-weight: 700; display: flex; gap: 10px; align-items: center; opacity: 0; }
+      #s2-shots { display: flex; gap: 16px; margin-top: 18px; }
+      .shot { flex: 1; height: 116px; border-radius: 14px; position: relative; overflow: hidden; opacity: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+      .shot span { position: absolute; left: 12px; bottom: 10px; font-size: 16px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: rgba(0,0,0,.55); }
+      #sh1 { background: linear-gradient(160deg, #1b2a4a, #c46a4a 70%, #120c10 71%); }
+      #sh2 { background: radial-gradient(40% 50% at 40% 45%, #ffcf8a, #b4552f 50%, #1a0f10 80%); }
+      #sh3 { background: linear-gradient(200deg, #0e1733, #34407a 55%, #0a0a12 56%); }
+      #s2-add { width: 70px; flex: none !important; display: grid; place-items: center; font-size: 36px; color: rgba(255,255,255,.4); background: rgba(255,255,255,.04); }
+
+      /* S3 Soul ID */
+      #s3 { top: 270px; }
+      #s3-row { display: flex; gap: 30px; align-items: center; margin-top: 34px; }
+      #s3-train { width: 320px; height: 420px; padding: 26px; display: flex; flex-direction: column; align-items: center; opacity: 0; }
+      .avatar { position: relative; width: 170px; height: 170px; border-radius: 50%; overflow: hidden; background: linear-gradient(160deg, #2a2a33, #16161b); }
+      .avatar::before { content: ""; position: absolute; left: 50%; top: 22%; width: 38%; height: 38%; margin-left: -19%; border-radius: 50%; background: linear-gradient(160deg, #e9ffb0, #d4ff3a); }
+      .avatar::after { content: ""; position: absolute; left: 50%; top: 64%; width: 70%; height: 60%; margin-left: -35%; border-radius: 50% 50% 0 0; background: linear-gradient(160deg, #e9ffb0, #d4ff3a); }
+      #s3-ring { position: absolute; width: 196px; height: 196px; margin-top: -13px; }
+      #s3-avatar-wrap { position: relative; width: 170px; height: 170px; display: grid; place-items: center; }
+      #s3-ring circle { fill: none; stroke-width: 5; }
+      #s3-scan { position: absolute; left: 0; right: 0; height: 3px; top: 0; background: #d4ff3a; box-shadow: 0 0 16px #d4ff3a; opacity: 0; }
+      #s3-status { margin-top: 52px; font-size: 26px; font-weight: 700; text-align: center; }
+      #s3-pct { font-variant-numeric: tabular-nums; }
+      #s3-done { color: #d4ff3a; opacity: 0; position: absolute; left: 0; right: 0; }
+      #s3-grid { display: grid; grid-template-columns: repeat(2, 255px); gap: 20px; }
+      .proj { height: 200px; padding: 16px; position: relative; overflow: hidden; opacity: 0; }
+      .proj .avatar { width: 96px; height: 96px; }
+      .proj span { position: absolute; left: 16px; bottom: 14px; font-size: 20px; font-weight: 700; }
+      .proj em { position: absolute; right: 14px; top: 14px; font-style: normal; font-size: 14px; font-weight: 800; letter-spacing: .08em; color: #0b0b0d; background: #d4ff3a; border-radius: 999px; padding: 4px 10px; }
+      #pr1 { background: linear-gradient(160deg, #1d2140, #141417 60%); }
+      #pr2 { background: linear-gradient(160deg, #3a1f2a, #141417 60%); }
+      #pr3 { background: linear-gradient(160deg, #183229, #141417 60%); }
+      #pr4 { background: linear-gradient(160deg, #3a311a, #141417 60%); }
+
+      /* S4 Marketing Studio */
+      #s4 { top: 225px; }
+      #s4-row { display: flex; align-items: center; gap: 30px; margin-top: 40px; }
+      #s4-in { display: flex; flex-direction: column; gap: 18px; width: 300px; }
+      #s4-prod { height: 250px; padding: 18px; opacity: 0; position: relative; overflow: hidden; }
+      #s4-prod .img { height: 170px; border-radius: 16px; background: radial-gradient(60% 60% at 50% 45%, #f1f1f4, #b9bcc6 70%, #8d909b); position: relative; }
+      #s4-prod .img::after { content: ""; position: absolute; left: 22%; top: 34%; width: 56%; height: 36%; border-radius: 40% 60% 18% 18% / 60% 60% 20% 20%; background: linear-gradient(160deg, #ff6b3d, #d63d1e); box-shadow: 0 16px 18px rgba(0,0,0,.25); }
+      #s4-prod span { display: block; margin-top: 14px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,.62); }
+      #s4-link { height: 64px; padding: 0 18px; display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 600; opacity: 0; }
+      #s4-link svg { width: 22px; height: 22px; flex: none; }
+      #s4-arrow { width: 90px; height: 90px; border-radius: 50%; display: grid; place-items: center; background: rgba(212,255,58,.12); box-shadow: inset 0 0 0 1px rgba(212,255,58,.4); opacity: 0; flex: none; }
+      #s4-ad { width: 330px; height: 470px; border-radius: 26px; position: relative; overflow: hidden; opacity: 0; background: #111; box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.1); }
+      #s4-ad-bg { position: absolute; inset: -8%; background: radial-gradient(50% 40% at 50% 42%, #ffb07a, #ff5a2a 45%, #2a0b06 80%); }
+      #s4-ad-shoe { position: absolute; left: 20%; top: 36%; width: 60%; height: 22%; border-radius: 40% 60% 18% 18% / 60% 60% 20% 20%; background: linear-gradient(160deg, #fff, #d9dbe3); box-shadow: 0 30px 30px rgba(0,0,0,.35); }
+      #s4-ad-copy { position: absolute; left: 22px; right: 22px; bottom: 60px; }
+      #s4-ad-copy b { display: block; font-size: 40px; font-weight: 900; letter-spacing: -.03em; line-height: .95; }
+      #s4-ad-copy span { display: inline-block; margin-top: 12px; padding: 8px 16px; border-radius: 999px; background: #fff; color: #111; font-size: 16px; font-weight: 800; }
+      #s4-ad-bar { position: absolute; left: 22px; right: 22px; bottom: 26px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.3); }
+      #s4-ad-prog { height: 100%; width: 100%; border-radius: 4px; background: #fff; transform-origin: 0 50%; }
+      #s4-ad-tag { position: absolute; left: 18px; top: 18px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,.45); font-size: 14px; font-weight: 800; letter-spacing: .08em; }
+      #s4-label { margin-top: 26px; font-size: 26px; font-weight: 700; opacity: 0; }
+
+      /* S5 models */
+      #s5 { top: 270px; }
+      #s5-grid { display: grid; grid-template-columns: repeat(2, 420px); gap: 22px; margin-top: 40px; }
+      .model { height: 170px; padding: 26px 28px; position: relative; overflow: hidden; opacity: 0; }
+      .model b { display: block; font-size: 44px; font-weight: 800; letter-spacing: -.035em; }
+      .model span { display: block; margin-top: 8px; font-size: 20px; font-weight: 600; color: rgba(255,255,255,.6); }
+      .model::after { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; opacity: .55; }
+      #m1::after { background: radial-gradient(#d4ff3a, rgba(212,255,58,0) 70%); }
+      #m2::after { background: radial-gradient(#5ad8ff, rgba(90,216,255,0) 70%); }
+      #m3::after { background: radial-gradient(#ff8a5a, rgba(255,138,90,0) 70%); }
+      #m4::after { background: radial-gradient(#b48cff, rgba(180,140,255,0) 70%); }
+
+      /* S6 getting started */
+      #s6 { top: 330px; }
+      #s6-steps { display: flex; gap: 14px; margin-top: 40px; }
+      .step6 { display: flex; align-items: center; gap: 12px; padding: 14px 22px 14px 14px; border-radius: 999px; background: #17171b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); font-size: 24px; font-weight: 650; opacity: 0; }
+      .step6 i { width: 34px; height: 34px; border-radius: 50%; background: #d4ff3a; color: #0b0b0d; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 18px; }
+
+      /* Browser screencast */
+      #browser {
+        position: absolute; left: 80px; top: 70px; width: 1420px; height: 940px; border-radius: 22px; overflow: hidden;
+        background: #0c0c0f; opacity: 0;
+        box-shadow: 0 50px 120px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.1);
+      }
+      #bar { position: absolute; left: 0; right: 0; top: 0; height: 64px; background: #1a1a1f; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .dot { position: absolute; top: 25px; width: 14px; height: 14px; border-radius: 50%; }
+      #url { position: absolute; left: 380px; right: 380px; top: 13px; height: 38px; border-radius: 10px; background: #0f0f13; display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 18px; font-weight: 500; color: rgba(255,255,255,.9); }
+      #url svg { width: 14px; height: 14px; flex: none; }
+      #url-caret { width: 2px; height: 20px; background: #d4ff3a; }
+      #url-hint { color: rgba(255,255,255,.35); position: absolute; left: 40px; }
+      #load { position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%; background: #d4ff3a; transform-origin: 0 50%; }
+      #page { position: absolute; left: 0; right: 0; top: 64px; bottom: 0; background: #0b0b0e; opacity: 0; overflow: hidden; }
+      #nav { position: absolute; left: 0; right: 0; top: 0; height: 72px; display: flex; align-items: center; padding: 0 40px; border-bottom: 1px solid rgba(255,255,255,.06); }
+      #logo { font-size: 26px; font-weight: 800; letter-spacing: -.04em; display: flex; align-items: center; gap: 10px; }
+      #logo i { width: 26px; height: 26px; border-radius: 8px; background: #d4ff3a; }
+      #links { margin-left: 60px; display: flex; gap: 34px; font-size: 17px; font-weight: 600; color: rgba(255,255,255,.6); }
+      #login { position: absolute; right: 190px; top: 25px; font-size: 17px; font-weight: 600; color: rgba(255,255,255,.75); }
+      #signup { position: absolute; right: 40px; top: 14px; width: 124px; height: 44px; border-radius: 999px; background: #d4ff3a; color: #0b0b0d; font-size: 17px; font-weight: 800; display: grid; place-items: center; }
+      #me { position: absolute; right: 40px; top: 14px; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(160deg, #e9ffb0, #d4ff3a); opacity: 0; }
+      #hero { position: absolute; left: 0; right: 0; top: 72px; bottom: 0; }
+      #hero h2 { position: absolute; left: 80px; top: 110px; font-size: 84px; font-weight: 800; letter-spacing: -.05em; line-height: .98; }
+      #hero p { position: absolute; left: 80px; top: 320px; font-size: 24px; font-weight: 500; color: rgba(255,255,255,.6); }
+      #hero .tiles { position: absolute; left: 80px; right: 80px; top: 440px; display: flex; gap: 20px; }
+      #hero .tiles div { flex: 1; height: 300px; border-radius: 22px; }
+      #t1 { background: linear-gradient(160deg, #1b2a4a, #c46a4a 70%, #120c10 71%); }
+      #t2 { background: radial-gradient(45% 55% at 50% 45%, #e9ffb0, #6d8a14 55%, #10140a); }
+      #t3 { background: radial-gradient(50% 40% at 50% 42%, #ffb07a, #ff5a2a 45%, #2a0b06 80%); }
+      #scrim { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; }
+      #modal { position: absolute; left: 450px; top: 200px; width: 520px; height: 600px; border-radius: 26px; background: #16161a; box-shadow: 0 40px 100px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.1); opacity: 0; overflow: hidden; }
+      .mview { position: absolute; inset: 0; padding: 40px 42px; }
+      .mview h3 { font-size: 34px; font-weight: 800; letter-spacing: -.03em; }
+      .mview p { margin-top: 10px; font-size: 18px; font-weight: 500; color: rgba(255,255,255,.58); line-height: 1.4; }
+      .auth { position: absolute; left: 42px; right: 42px; height: 58px; border-radius: 14px; display: flex; align-items: center; gap: 16px; padding: 0 20px; font-size: 19px; font-weight: 650; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+      .auth svg { width: 24px; height: 24px; flex: none; }
+      .auth .glow { position: absolute; inset: -3px; border-radius: 17px; box-shadow: 0 0 0 3px #d4ff3a, 0 0 30px rgba(212,255,58,.35); opacity: 0; }
+      #a-google { top: 150px; } #a-apple { top: 222px; } #a-ms { top: 294px; } #a-mail { top: 400px; }
+      #or { position: absolute; left: 42px; right: 42px; top: 368px; text-align: center; font-size: 15px; font-weight: 600; color: rgba(255,255,255,.6); }
+      #age-note { position: absolute; left: 42px; right: 42px; top: 490px; font-size: 16px; font-weight: 500; color: rgba(255,255,255,.45); line-height: 1.4; }
+      #v-mail { opacity: 0; }
+      #codes { position: absolute; left: 62px; top: 210px; display: flex; gap: 12px; }
+      .box { position: relative; width: 56px; height: 70px; border-radius: 14px; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); display: grid; place-items: center; font-size: 34px; font-weight: 800; }
+      .box b { opacity: 0; }
+      .box .hl { position: absolute; inset: -2px; border-radius: 16px; box-shadow: 0 0 0 2px #d4ff3a; opacity: 0; }
+      #v-ok { position: absolute; left: 0; right: 0; top: 330px; display: flex; flex-direction: column; align-items: center; opacity: 0; }
+      #v-ok .ok { width: 96px; height: 96px; border-radius: 50%; background: #d4ff3a; display: grid; place-items: center; }
+      #v-ok span { margin-top: 18px; font-size: 26px; font-weight: 800; }
+      #mail-field { position: absolute; left: 42px; right: 42px; top: 330px; height: 56px; border-radius: 14px; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); display: flex; align-items: center; padding: 0 18px; font-size: 18px; color: rgba(255,255,255,.8); }
+      #toast { position: absolute; right: 24px; top: 88px; width: 400px; padding: 18px 20px; border-radius: 18px; background: rgba(38,38,44,.92); box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); display: flex; gap: 16px; align-items: center; opacity: 0; }
+      #toast .ic { width: 48px; height: 48px; border-radius: 12px; background: #d4ff3a; display: grid; place-items: center; flex: none; }
+      #toast b { display: block; font-size: 16px; font-weight: 700; color: rgba(255,255,255,.7); }
+      #toast span { display: block; margin-top: 4px; font-size: 20px; font-weight: 700; }
+      #age {
+        position: absolute; left: 70px; top: 330px; width: 300px; padding: 30px; border-radius: 26px; text-align: center; opacity: 0;
+        background: #16161a; box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 0 1px rgba(212,255,58,.35);
+      }
+      #age .badge { width: 120px; height: 120px; margin: 0 auto; border-radius: 50%; background: #d4ff3a; color: #0b0b0d; display: grid; place-items: center; font-size: 48px; font-weight: 900; letter-spacing: -.04em; }
+      #age span { display: block; margin-top: 18px; font-size: 22px; font-weight: 700; line-height: 1.25; }
+      #home { position: absolute; left: 0; right: 0; top: 72px; bottom: 0; opacity: 0; }
+      #home h2 { position: absolute; left: 74px; top: 70px; font-size: 56px; font-weight: 800; letter-spacing: -.045em; }
+      #home p { position: absolute; left: 74px; top: 150px; font-size: 22px; font-weight: 500; color: rgba(255,255,255,.55); }
+      .tool { position: absolute; top: 230px; width: 300px; height: 330px; border-radius: 22px; overflow: hidden; background: #141417; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); opacity: 0; }
+      .tool .art { height: 220px; }
+      .tool b { display: block; padding: 18px 20px 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+      .tool span { display: block; padding: 6px 20px 0; font-size: 16px; font-weight: 500; color: rgba(255,255,255,.55); }
+      .tool .ring { position: absolute; inset: 0; border-radius: 22px; box-shadow: inset 0 0 0 3px #d4ff3a; opacity: 0; }
+      #tl1 { left: 74px; } #tl2 { left: 398px; } #tl3 { left: 722px; } #tl4 { left: 1046px; }
+      #tl1 .art { background: linear-gradient(160deg, #1b2a4a, #c46a4a 70%, #120c10 71%); }
+      #tl2 .art { background: radial-gradient(45% 55% at 50% 45%, #e9ffb0, #6d8a14 55%, #10140a); }
+      #tl3 .art { background: radial-gradient(50% 40% at 50% 42%, #ffb07a, #ff5a2a 45%, #2a0b06 80%); }
+      #tl4 .art { background: radial-gradient(50% 50% at 50% 50%, #b48cff, #3a2a6e 55%, #0e0a1a); }
+      #prompt { position: absolute; left: 74px; right: 74px; top: 610px; height: 84px; border-radius: 20px; background: #16161a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 0 0 0 rgba(212,255,58,0); display: flex; align-items: center; padding: 0 16px 0 26px; font-size: 22px; font-weight: 500; opacity: 0; }
+      #prompt-text { color: rgba(255,255,255,.9); white-space: nowrap; overflow: hidden; }
+      #prompt-caret { width: 2px; height: 26px; background: #d4ff3a; margin-left: 2px; }
+      #gen { margin-left: auto; height: 54px; padding: 0 26px; border-radius: 14px; background: #d4ff3a; color: #0b0b0d; font-size: 19px; font-weight: 800; display: grid; place-items: center; }
+
+      #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; }
+      #cursor svg { width: 34px; height: 34px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+      #ripple { position: absolute; left: -30px; top: -30px; width: 60px; height: 60px; border-radius: 50%; border: 3px solid #d4ff3a; opacity: 0; }
+
+      /* Walkthrough step tracker (right column above the PiP) */
+      #steps { position: absolute; left: 1545px; top: 90px; width: 320px; opacity: 0; }
+      #steps h4 { font-size: 18px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+      .st { position: relative; display: flex; align-items: center; gap: 16px; margin-top: 26px; font-size: 22px; font-weight: 650; color: rgba(255,255,255,.6); }
+      .st i { width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center; font-style: normal; font-size: 17px; font-weight: 800; background: #17171b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+      .st.on { color: #fff; }
+    </style>
+  </head>
+  <body>
+    <div id="main" data-composition-id="main" data-duration="53.568" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="53.568" data-track-index="2"><div id="stage-grid"></div></div>
+
+      <div id="cam">
+        <video id="a-roll" class="clip" src="assets/source.mp4" data-start="0" data-duration="53.568" data-track-index="0" muted playsinline></video>
+      </div>
+      <div id="cam-ring"></div>
+      <audio id="voice" src="assets/source.mp4" data-start="0" data-duration="53.568" data-track-index="1" data-volume="1"></audio>
+
+      <div id="ui" class="clip" data-start="0" data-duration="53.568" data-track-index="3">
+        <!-- 0: hook -->
+        <div id="hook" class="scene">
+          <div class="eyebrow">Level up</div>
+          <div id="hook-a">Your content</div>
+          <div id="hook-b">creation</div>
+          <div id="hook-rule"></div>
+          <div id="hook-c"><span class="x">✕</span><span class="txt">Advanced technical skills<span id="hook-strike"></span></span></div>
+          <div id="hook-d">Not needed.</div>
+        </div>
+
+        <!-- 1: intro -->
+        <div id="s1" class="scene col">
+          <div id="s1-word"></div>
+          <div id="s1-tag"><span class="lime">AI-native</span> creative suite</div>
+          <div id="s1-pills">
+            <div id="p1" class="pill"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></i>Video production</div>
+            <div id="p2" class="pill"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></i>Character consistency</div>
+            <div id="p3" class="pill"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 11v2a2 2 0 002 2h2l5 4V5L7 9H5a2 2 0 00-2 2z"/><path d="M16 9a4 4 0 010 6"/></svg></i>Ad creation</div>
+            <div id="p-one"><i><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#d4ff3a" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></i>All under one subscription</div>
+          </div>
+        </div>
+
+        <!-- 2: Cinema Studio -->
+        <div id="s2" class="scene col">
+          <div class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" stroke-width="2.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4M16 5v4"/></svg></i>Cinema Studio</div>
+          <div id="s2-app" class="panel">
+            <div id="s2-view">
+              <div id="s2-scene"></div>
+              <div id="s2-mount"></div>
+              <div class="letterbox" style="top:0"></div>
+              <div class="letterbox" style="bottom:0"></div>
+              <div id="s2-rec"><b></b>SCENE 01</div>
+              <div id="s2-reticle"></div>
+              <div id="s2-cam"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#d4ff3a" stroke-width="2.4"><path d="M4 12h16M14 6l6 6-6 6"/></svg>Camera · Dolly in</div>
+            </div>
+            <div id="s2-shots">
+              <div id="sh1" class="shot"><span>Shot 1</span></div>
+              <div id="sh2" class="shot"><span>Shot 2</span></div>
+              <div id="sh3" class="shot"><span>Shot 3</span></div>
+              <div id="s2-add" class="shot">+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3: Soul ID -->
+        <div id="s3" class="scene col">
+          <div class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></i>Soul ID</div>
+          <div id="s3-row">
+            <div id="s3-train" class="panel">
+              <div id="s3-avatar-wrap">
+                <svg id="s3-ring" viewBox="0 0 196 196"><circle cx="98" cy="98" r="94" stroke="rgba(255,255,255,.1)"/><circle id="s3-arc" cx="98" cy="98" r="94" stroke="#d4ff3a" stroke-linecap="round" stroke-dasharray="590.6" stroke-dashoffset="590.6" transform="rotate(-90 98 98)"/></svg>
+                <div class="avatar"><div id="s3-scan"></div></div>
+              </div>
+              <div id="s3-status" style="position:relative;width:100%"><span id="s3-training">Training <span id="s3-pct">0</span>%</span><span id="s3-done">Trained once ✓</span></div>
+            </div>
+            <div id="s3-grid">
+              <div id="pr1" class="proj panel"><div class="avatar"></div><em>SAME</em><span>Short film</span></div>
+              <div id="pr2" class="proj panel"><div class="avatar"></div><em>SAME</em><span>Music video</span></div>
+              <div id="pr3" class="proj panel"><div class="avatar"></div><em>SAME</em><span>Product ad</span></div>
+              <div id="pr4" class="proj panel"><div class="avatar"></div><em>SAME</em><span>Social post</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4: Marketing Studio -->
+        <div id="s4" class="scene col">
+          <div class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" stroke-width="2.5"><path d="M3 11v2a2 2 0 002 2h2l5 4V5L7 9H5a2 2 0 00-2 2z"/><path d="M16 9a4 4 0 010 6"/></svg></i>Marketing Studio</div>
+          <div id="s4-row">
+            <div id="s4-in">
+              <div id="s4-prod" class="panel"><div class="img"></div><span>product.png</span></div>
+              <div id="s4-link" class="panel"><svg viewBox="0 0 24 24" fill="none" stroke="#d4ff3a" stroke-width="2.4"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>shop.com/sneaker</div>
+            </div>
+            <div id="s4-arrow"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#d4ff3a" stroke-width="2.6"><path d="M4 12h16M14 6l6 6-6 6"/></svg></div>
+            <div>
+              <div id="s4-ad">
+                <div id="s4-ad-bg"></div>
+                <div id="s4-ad-shoe"></div>
+                <div id="s4-ad-tag">AD · 0:15</div>
+                <div id="s4-ad-copy"><b>NEW<br />DROP.</b><span>Shop now</span></div>
+                <div id="s4-ad-bar"><div id="s4-ad-prog"></div></div>
+              </div>
+              <div id="s4-label">Finished <span class="lime">video ad</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5: models -->
+        <div id="s5" class="scene col">
+          <div class="eyebrow" id="s5-eye">Included</div>
+          <div class="h1" id="s5-h">Top AI models</div>
+          <div id="s5-grid">
+            <div id="m1" class="model panel"><b>Seedance</b><span>Video model</span></div>
+            <div id="m2" class="model panel"><b>Kling</b><span>Video model</span></div>
+            <div id="m3" class="model panel"><b>Veo</b><span>Video model</span></div>
+            <div id="m4" class="model panel"><b>Sora</b><span>Video model</span></div>
+          </div>
+        </div>
+
+        <!-- 6: getting started -->
+        <div id="s6" class="scene col">
+          <div class="h1" style="margin-top:0">Getting started<br />is <span class="lime">simple.</span></div>
+          <div id="s6-steps">
+            <div class="step6"><i>1</i>Sign up</div>
+            <div class="step6"><i>2</i>Verify</div>
+            <div class="step6"><i>3</i>Create</div>
+          </div>
+        </div>
+
+        <!-- 7: browser screencast -->
+        <div id="browser">
+          <div id="bar">
+            <div class="dot" style="left:22px;background:#ff5f57"></div>
+            <div class="dot" style="left:46px;background:#febc2e"></div>
+            <div class="dot" style="left:70px;background:#28c840"></div>
+            <div id="url"><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><span id="url-text"></span><span id="url-caret"></span><span id="url-hint">Search or enter address</span></div>
+            <div id="load"></div>
+          </div>
+          <div id="page">
+            <div id="nav">
+              <div id="logo"><i></i>Higgsfield</div>
+              <div id="links"><span>Explore</span><span>Create</span><span>Pricing</span></div>
+              <div id="login">Log in</div>
+              <div id="signup">Sign up</div>
+              <div id="me"></div>
+            </div>
+            <div id="hero" data-layout-allow-overlap>
+              <h2>Create anything.<br /><span class="lime">No skills required.</span></h2>
+              <p>Video, characters and ads in one AI-native suite.</p>
+              <div class="tiles"><div id="t1"></div><div id="t2"></div><div id="t3"></div></div>
+            </div>
+            <div id="home">
+              <h2>What will you create today?</h2>
+              <p>Pick a tool to get started.</p>
+              <div id="tl1" class="tool"><div class="art"></div><b>Cinema Studio</b><span>Multi-shot cinematic scenes</span><div class="ring"></div></div>
+              <div id="tl2" class="tool"><div class="art"></div><b>Soul ID</b><span>Consistent AI characters</span><div class="ring"></div></div>
+              <div id="tl3" class="tool"><div class="art"></div><b>Marketing Studio</b><span>Products into video ads</span><div class="ring"></div></div>
+              <div id="tl4" class="tool"><div class="art"></div><b>Models</b><span>Seedance, Kling, Veo, Sora</span><div class="ring"></div></div>
+              <div id="prompt"><span id="prompt-text"></span><span id="prompt-caret"></span><div id="gen">Generate</div></div>
+            </div>
+            <div id="scrim"></div>
+            <div id="modal">
+              <div id="v-auth" class="mview">
+                <h3>Create your account</h3>
+                <p>Sign up to start creating.</p>
+                <div id="a-google" class="auth"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.6a4.8 4.8 0 01-2.1 3.1v2.6h3.4c2-1.8 3.1-4.5 3.1-7.6z"/><path fill="#34A853" d="M12 22c2.8 0 5.2-.9 6.9-2.5l-3.4-2.6c-.9.6-2.1 1-3.5 1-2.7 0-5-1.8-5.8-4.3H2.7v2.7A10 10 0 0012 22z"/><path fill="#FBBC05" d="M6.2 13.6a6 6 0 010-3.8V7.1H2.7a10 10 0 000 9z"/><path fill="#EA4335" d="M12 5.9c1.5 0 2.9.5 4 1.5l3-3A10 10 0 002.7 7.1l3.5 2.7C7 7.7 9.3 5.9 12 5.9z"/></svg>Continue with Google<div class="glow"></div></div>
+                <div id="a-apple" class="auth"><svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.9 2.3-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2 0 1.6-.8 3.1-.8s1.8.8 3.1.8 2.1-1.2 2.9-2.3c.9-1.3 1.3-2.6 1.3-2.7 0 0-2.6-1-2.7-3.9zM14.1 5.5c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z"/></svg>Continue with Apple<div class="glow"></div></div>
+                <div id="a-ms" class="auth"><svg viewBox="0 0 24 24"><path fill="#F25022" d="M3 3h8.5v8.5H3z"/><path fill="#7FBA00" d="M12.5 3H21v8.5h-8.5z"/><path fill="#00A4EF" d="M3 12.5h8.5V21H3z"/><path fill="#FFB900" d="M12.5 12.5H21V21h-8.5z"/></svg>Continue with Microsoft<div class="glow"></div></div>
+                <div id="or">or</div>
+                <div id="a-mail" class="auth"><svg viewBox="0 0 24 24" fill="none" stroke="#d4ff3a" stroke-width="2.2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Continue with email<div class="glow"></div></div>
+                <div id="age-note">Available to users aged 18 and over.</div>
+              </div>
+              <div id="v-mail" class="mview">
+                <h3>Check your inbox</h3>
+                <p>Enter the 6-digit code we sent to<br /><span style="color:#fff">you@example.com</span></p>
+                <div id="codes">
+                  <div class="box"><b>4</b><div class="hl"></div></div>
+                  <div class="box"><b>8</b><div class="hl"></div></div>
+                  <div class="box"><b>2</b><div class="hl"></div></div>
+                  <div class="box"><b>9</b><div class="hl"></div></div>
+                  <div class="box"><b>1</b><div class="hl"></div></div>
+                  <div class="box"><b>6</b><div class="hl"></div></div>
+                </div>
+                <div id="v-ok"><div class="ok"><svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#0b0b0d" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></div><span>You're in</span></div>
+              </div>
+            </div>
+            <div id="age"><div class="badge">18+</div><span>Available to users aged <span class="lime">18 and over</span></span></div>
+            <div id="toast"><div class="ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#0b0b0d" stroke-width="2.4"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div><div><b>Inbox · Higgsfield</b><span>Your code: 482 916</span></div></div>
+          </div>
+          <div id="cursor"><div id="ripple"></div><svg viewBox="0 0 24 24"><path d="M4 2l16 11-7 1.5L9.5 21z" fill="#fff" stroke="#0b0b0d" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+        </div>
+
+        <div id="steps">
+          <h4>Sign up in 4 steps</h4>
+          <div class="st" id="st1"><i>1</i>Go to higgsfield.ai</div>
+          <div class="st" id="st2"><i>2</i>Select Sign up</div>
+          <div class="st" id="st3"><i>3</i>Verify your email</div>
+          <div class="st" id="st4"><i>4</i>Pick a tool</div>
+        </div>
+      </div>
+
+      <!-- Sound design: quiet UI effects under the voice -->
+      <audio id="sfx-1" src="assets/sfx/whoosh.mp3" data-start="3.9" data-duration="0.57" data-track-index="4" data-volume="0.28"></audio>
+      <audio id="sfx-2" src="assets/sfx/pop.mp3" data-start="10.72" data-duration="0.72" data-track-index="4" data-volume="0.22"></audio>
+      <audio id="sfx-3" src="assets/sfx/whoosh-short.mp3" data-start="12.1" data-duration="0.57" data-track-index="4" data-volume="0.2"></audio>
+      <audio id="sfx-4" src="assets/sfx/whoosh-short.mp3" data-start="16.8" data-duration="0.57" data-track-index="4" data-volume="0.2"></audio>
+      <audio id="sfx-5" src="assets/sfx/sparkle.mp3" data-start="19.3" data-duration="1.8" data-track-index="4" data-volume="0.16"></audio>
+      <audio id="sfx-6" src="assets/sfx/whoosh-short.mp3" data-start="22.7" data-duration="0.57" data-track-index="4" data-volume="0.2"></audio>
+      <audio id="sfx-7" src="assets/sfx/whoosh-short.mp3" data-start="27.7" data-duration="0.57" data-track-index="4" data-volume="0.2"></audio>
+      <audio id="sfx-8" src="assets/sfx/whoosh.mp3" data-start="35.2" data-duration="0.57" data-track-index="4" data-volume="0.28"></audio>
+      <audio id="sfx-9" src="assets/sfx/typing.mp3" data-start="35.8" data-duration="0.9" data-track-index="5" data-volume="0.22"></audio>
+      <audio id="sfx-10" src="assets/sfx/click.mp3" data-start="37.28" data-duration="0.37" data-track-index="5" data-volume="0.3"></audio>
+      <audio id="sfx-11" src="assets/sfx/pop.mp3" data-start="40.34" data-duration="0.72" data-track-index="5" data-volume="0.2"></audio>
+      <audio id="sfx-12" src="assets/sfx/click.mp3" data-start="45.42" data-duration="0.37" data-track-index="5" data-volume="0.3"></audio>
+      <audio id="sfx-13" src="assets/sfx/notification.mp3" data-start="48.3" data-duration="1.2" data-track-index="5" data-volume="0.22"></audio>
+      <audio id="sfx-14" src="assets/sfx/chime.mp3" data-start="49.62" data-duration="1.4" data-track-index="6" data-volume="0.18"></audio>
+      <audio id="sfx-15" src="assets/sfx/click-soft.mp3" data-start="51.98" data-duration="0.37" data-track-index="5" data-volume="0.3"></audio>
+      <audio id="sfx-16" src="assets/sfx/typing.mp3" data-start="52.6" data-duration="0.95" data-track-index="5" data-volume="0.18"></audio>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const E = "expo.out";
+
+      // Wordmark letters
+      const word = document.getElementById("s1-word");
+      "Higgsfield".split("").forEach((c) => { const s = document.createElement("span"); s.textContent = c; word.appendChild(s); });
+
+      // Helpers: every element's resting (hidden) state is in CSS; these only animate away from it.
+      function inn(sel, at, extra) {
+        tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(10px)" },
+          Object.assign({ opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: E, immediateRender: false }, extra || {}), at);
+      }
+      function out(sel, at) {
+        tl.to(sel, { opacity: 0, y: -18, filter: "blur(10px)", duration: 0.3, ease: "power2.in" }, at);
+      }
+      function pop(sel, at, stagger) {
+        tl.fromTo(sel, { opacity: 0, scale: 0.86, y: 14 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)", stagger: stagger || 0, immediateRender: false }, at);
+      }
+
+      // ---- Camera states ----
+      const FULL = { x: 0, y: 0, scale: 1, clipPath: "inset(0px 0px 0px 0px round 0px)" };
+      const CARD = { x: 490, y: 0, scale: 1, clipPath: "inset(90px 570px 90px 570px round 44px)" };
+      const PIP = { x: 1225, y: 590, scale: 0.5, clipPath: "inset(110px 640px 240px 640px round 80px)" };
+      tl.set("#cam", FULL, 0);
+      tl.set("#hook-strike, #s4-ad-prog, #load", { scaleX: 0 }, 0);
+      // Explicit from-values: computed clip-path strings are normalised by the browser
+      // (e.g. to a two-value inset) and would not interpolate cleanly.
+      tl.fromTo("#cam", FULL, Object.assign({ duration: 1.0, ease: "expo.inOut", immediateRender: false }, CARD), 3.92);
+      // From the walkthrough on, the footage floats above the browser.
+      tl.set("#cam, #cam-ring", { zIndex: 1 }, 0);
+      tl.set("#cam, #cam-ring", { zIndex: 10 }, 35.15);
+      tl.fromTo("#cam", CARD, Object.assign({ duration: 1.0, ease: "expo.inOut", immediateRender: false }, PIP), 35.2);
+      // Hairline ring follows the card edges
+      tl.set("#cam-ring", { x: 1060, y: 90, width: 780, height: 900, borderRadius: 44 }, 0);
+      tl.to("#cam-ring", { opacity: 1, duration: 0.4 }, 4.7);
+      tl.to("#cam-ring", { opacity: 0, duration: 0.2 }, 35.2);
+      tl.set("#cam-ring", { x: 1545, y: 645, width: 320, height: 365, borderRadius: 40 }, 35.5);
+      tl.to("#cam-ring", { opacity: 1, duration: 0.4 }, 36.1);
+
+      // ---- 0. Hook (0.0-3.9) ----
+      tl.fromTo("#hook", { opacity: 0, x: -60, scale: 0.92, filter: "blur(16px)" }, { opacity: 1, x: 0, scale: 1, filter: "blur(0px)", duration: 0.7, ease: E, immediateRender: false }, 0.05);
+      tl.set("#hook .eyebrow, #hook-a, #hook-b, #hook-c", { opacity: 0 }, 0);
+      inn("#hook .eyebrow", 0.35);
+      inn("#hook-a", 0.9);
+      inn("#hook-b", 1.35);
+      inn("#hook-c", 2.5);
+      tl.to("#hook-strike", { scaleX: 1, duration: 0.5, ease: "power3.inOut" }, 3.05);
+      inn("#hook-d", 3.3);
+      tl.to("#hook", { opacity: 0, x: -40, filter: "blur(12px)", duration: 0.35, ease: "power2.in" }, 3.85);
+
+      // ---- 1. Intro (4.1-11.9) ----
+      tl.set("#s1", { opacity: 1 }, 4.0);
+      tl.fromTo("#s1-word span", { opacity: 0, y: 40, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: E, stagger: 0.045, immediateRender: false }, 4.3);
+      inn("#s1-tag", 4.95);
+      inn("#p1", 7.25, { x: 0 });
+      inn("#p2", 8.05);
+      inn("#p3", 9.68);
+      tl.to(["#p1", "#p3"], { y: (i) => (i === 0 ? 100 : -100), opacity: 0, scale: 0.9, duration: 0.5, ease: "expo.in" }, 10.55);
+      tl.to("#p2", { opacity: 0, scale: 0.9, duration: 0.5, ease: "expo.in" }, 10.55);
+      tl.fromTo("#p-one", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.8)", immediateRender: false }, 10.95);
+      tl.to("#s1", { opacity: 0, y: -20, filter: "blur(10px)", duration: 0.3, ease: "power2.in" }, 11.8);
+
+      // ---- 2. Cinema Studio (12.2-16.6) ----
+      inn("#s2", 12.15);
+      inn("#s2-app", 13.45);
+      pop("#sh1", 14.55); pop("#sh2", 14.85); pop("#sh3", 15.12); pop("#s2-add", 15.35);
+      tl.fromTo("#s2-reticle", { opacity: 0, scale: 1.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: E, immediateRender: false }, 15.6);
+      inn("#s2-cam", 15.7);
+      tl.fromTo("#s2-scene", { scale: 1, xPercent: 0 }, { scale: 1.18, xPercent: -4, duration: 1.4, ease: "power2.inOut", immediateRender: false }, 15.7);
+      tl.fromTo("#s2-mount", { scale: 1, yPercent: 0 }, { scale: 1.12, yPercent: 6, duration: 1.4, ease: "power2.inOut", immediateRender: false }, 15.7);
+      out("#s2", 16.55);
+
+      // ---- 3. Soul ID (16.9-22.5) ----
+      inn("#s3", 16.88);
+      inn("#s3-train", 17.3);
+      const pct = { v: 0 };
+      tl.to(pct, { v: 100, duration: 1.5, ease: "power1.inOut", onUpdate: () => { document.getElementById("s3-pct").textContent = Math.round(pct.v); } }, 17.95);
+      tl.to("#s3-arc", { strokeDashoffset: 0, duration: 1.5, ease: "power1.inOut" }, 17.95);
+      tl.fromTo("#s3-scan", { opacity: 0, y: 0 }, { opacity: 1, y: 166, duration: 1.5, ease: "power1.inOut", immediateRender: false }, 17.95);
+      tl.to("#s3-scan", { opacity: 0, duration: 0.2 }, 19.45);
+      tl.to("#s3-training", { opacity: 0, duration: 0.2 }, 19.45);
+      tl.fromTo("#s3-done", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: E, immediateRender: false }, 19.5);
+      pop("#pr1", 20.05); pop("#pr2", 20.6); pop("#pr3", 21.28); pop("#pr4", 21.62);
+      out("#s3", 22.45);
+
+      // ---- 4. Marketing Studio (22.8-27.6) ----
+      inn("#s4", 22.8);
+      pop("#s4-prod", 24.5);
+      pop("#s4-link", 25.45);
+      tl.fromTo("#s4-arrow", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: E, immediateRender: false }, 25.95);
+      tl.fromTo("#s4-ad", { opacity: 0, scale: 0.85, rotationY: -25, transformPerspective: 1000 }, { opacity: 1, scale: 1, rotationY: 0, duration: 0.8, ease: E, immediateRender: false }, 26.2);
+      tl.fromTo("#s4-ad-bg", { scale: 1 }, { scale: 1.12, duration: 1.4, ease: "none", immediateRender: false }, 26.3);
+      tl.fromTo("#s4-ad-shoe", { y: 20, rotation: -6 }, { y: 0, rotation: 0, duration: 1.2, ease: "power2.out", immediateRender: false }, 26.3);
+      tl.to("#s4-ad-prog", { scaleX: 1, duration: 1.3, ease: "none" }, 26.4);
+      inn("#s4-label", 27.0);
+      out("#s4", 27.62);
+
+      // ---- 5. Models (27.8-33.5) ----
+      tl.set("#s5", { opacity: 1 }, 27.8);
+      tl.set("#s5-eye, #s5-h", { opacity: 0 }, 0);
+      inn("#s5-eye", 28.45);
+      inn("#s5-h", 29.08);
+      pop("#m1", 30.52); pop("#m2", 31.25); pop("#m3", 32.02); pop("#m4", 32.7);
+      tl.to("#m1, #m2, #m3, #m4", { boxShadow: "inset 0 0 0 1px rgba(212,255,58,.45), 0 30px 80px rgba(0,0,0,.45)", duration: 0.3, stagger: 0.06 }, 33.1);
+      tl.to("#s5", { opacity: 0, y: -18, filter: "blur(10px)", duration: 0.3, ease: "power2.in" }, 33.55);
+
+      // ---- 6. Getting started (33.9-35.2) ----
+      inn("#s6", 33.9);
+      pop("#s6 .step6", 34.3, 0.12);
+      out("#s6", 35.05);
+
+      // ---- 7. Browser screencast (35.3-53.57) ----
+      tl.fromTo("#browser", { opacity: 0, y: 80, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: E, immediateRender: false }, 35.3);
+      tl.fromTo("#steps", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: E, immediateRender: false }, 35.9);
+      function step(n, at) {
+        tl.to("#st" + n, { color: "#fff", duration: 0.25 }, at);
+        tl.to("#st" + n + " i", { backgroundColor: "#d4ff3a", color: "#0b0b0d", boxShadow: "inset 0 0 0 1px rgba(212,255,58,1)", duration: 0.25 }, at);
+        if (n > 1) tl.to("#st" + (n - 1), { color: "rgba(255,255,255,.7)", duration: 0.25 }, at);
+      }
+      step(1, 35.6);
+
+      // URL types "higgsfield.ai" on the spoken word (35.62-36.73)
+      const urlText = "higgsfield.ai";
+      tl.to("#url-hint", { opacity: 0, duration: 0.1 }, 35.6);
+      const typed = { n: 0 };
+      tl.to(typed, { n: urlText.length, duration: 0.95, ease: "none", onUpdate: () => { document.getElementById("url-text").textContent = urlText.slice(0, Math.round(typed.n)); } }, 35.68);
+      tl.to("#load", { scaleX: 1, duration: 0.35, ease: "power2.inOut" }, 36.62);
+      tl.to("#load", { opacity: 0, duration: 0.15 }, 36.98);
+      tl.to("#url-caret", { opacity: 0, duration: 0.1 }, 36.65);
+      tl.to("#page", { opacity: 1, duration: 0.3, ease: "power1.out" }, 36.7);
+
+      // Cursor: move to Sign up and click on "sign up"
+      function clickAt(at) {
+        tl.fromTo("#ripple", { opacity: 1, scale: 0.3 }, { opacity: 0, scale: 1.6, duration: 0.5, ease: "power2.out", immediateRender: false }, at);
+        tl.to("#cursor svg", { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1, transformOrigin: "0 0" }, at);
+      }
+      tl.set("#cursor", { x: 820, y: 700 }, 0);
+      tl.to("#cursor", { opacity: 1, duration: 0.2 }, 36.8);
+      tl.to("#cursor", { x: 1318, y: 100, duration: 0.45, ease: "power2.inOut" }, 36.82);
+      clickAt(37.3);
+      tl.to("#signup", { scale: 0.94, duration: 0.08, yoyo: true, repeat: 1 }, 37.3);
+      step(2, 37.25);
+
+      // Modal
+      tl.to("#scrim", { opacity: 1, duration: 0.35 }, 37.5);
+      tl.to("#hero h2, #hero p", { opacity: 0, duration: 0.3 }, 37.5);
+      tl.to("#hero .tiles", { opacity: 0.4, duration: 0.35 }, 37.5);
+      tl.to("#signup, #login", { opacity: 0, duration: 0.3 }, 37.6);
+      tl.fromTo("#modal", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: E, immediateRender: false }, 37.55);
+      tl.to("#cursor", { x: 1080, y: 520, duration: 0.6, ease: "power2.inOut" }, 37.9);
+
+      // 18+ on "18" (40.36)
+      tl.fromTo("#age", { opacity: 0, x: -30, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)", immediateRender: false }, 40.3);
+      tl.to("#age-note", { color: "#d4ff3a", duration: 0.3 }, 40.36);
+      tl.to("#age", { opacity: 0, x: -20, duration: 0.3, ease: "power2.in" }, 41.45);
+
+      // Providers light up as named
+      function glow(id, at, hold) {
+        tl.to(id + " .glow", { opacity: 1, duration: 0.2 }, at);
+        if (hold) tl.to(id + " .glow", { opacity: 0, duration: 0.25 }, at + hold);
+      }
+      glow("#a-google", 42.55, 0.5);
+      glow("#a-apple", 43.03, 0.48);
+      glow("#a-ms", 43.5, 0.8);
+      glow("#a-mail", 44.32, 1.4);
+      tl.to("#cursor", { x: 690, y: 684, duration: 0.55, ease: "power2.inOut" }, 44.4);
+      clickAt(45.42);
+      step(3, 45.42);
+
+      // Email view: code boxes, inbox toast, digits, success
+      tl.to("#v-auth", { opacity: 0, x: -30, duration: 0.3, ease: "power2.in" }, 45.62);
+      tl.fromTo("#v-mail", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.45, ease: E, immediateRender: false }, 45.8);
+      tl.to("#cursor", { x: 1040, y: 760, duration: 0.6, ease: "power2.inOut" }, 45.9);
+      tl.to("#codes .hl", { opacity: 1, duration: 0.12, stagger: 0.1 }, 46.68);
+      tl.to("#codes .hl", { opacity: 0, duration: 0.2, stagger: 0.05 }, 47.4);
+      tl.fromTo("#toast", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.5, ease: E, immediateRender: false }, 48.34);
+      tl.fromTo("#codes b", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.2, ease: "power2.out", stagger: 0.08, immediateRender: false }, 48.95);
+      tl.to("#toast", { opacity: 0, y: -16, duration: 0.3 }, 49.6);
+      tl.to("#codes", { opacity: 0, y: -10, duration: 0.25 }, 49.55);
+      tl.fromTo("#v-ok", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)", immediateRender: false }, 49.62);
+
+      // Signed in: homepage with tools
+      tl.to("#modal", { opacity: 0, scale: 0.96, duration: 0.3, ease: "power2.in" }, 50.05);
+      tl.to("#scrim", { opacity: 0, duration: 0.35 }, 50.1);
+      tl.to("#hero", { opacity: 0, duration: 0.25 }, 50.1);
+      tl.to("#me", { opacity: 1, duration: 0.3 }, 50.3);
+      tl.to("#home", { opacity: 1, duration: 0.3 }, 50.25);
+      pop("#home .tool", 50.35, 0.08);
+      step(4, 51.05);
+      tl.to("#cursor", { x: 230, y: 470, duration: 0.6, ease: "power2.inOut" }, 51.05);
+      tl.to("#tl1", { y: -8, duration: 0.3, ease: "power2.out" }, 51.5);
+      tl.to("#tl1 .ring", { opacity: 1, duration: 0.2 }, 51.5);
+      clickAt(51.98);
+      tl.to("#tl2, #tl3, #tl4", { opacity: 0.35, duration: 0.3 }, 52.05);
+      tl.fromTo("#prompt", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: E, immediateRender: false }, 52.3);
+      tl.to("#cursor", { opacity: 0, duration: 0.2 }, 52.3);
+      const pText = "A cinematic drone shot over neon Tokyo at night";
+      const pt = { n: 0 };
+      tl.to(pt, { n: pText.length, duration: 1.0, ease: "none", onUpdate: () => { document.getElementById("prompt-text").textContent = pText.slice(0, Math.round(pt.n)); } }, 52.55);
+      tl.to("#gen", { boxShadow: "0 0 36px rgba(212,255,58,.7)", duration: 0.4, yoyo: true, repeat: 1 }, 52.75);
+
+      tl.set({}, {}, 53.568);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
