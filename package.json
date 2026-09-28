@@ -1,0 +1,13 @@
+{
+  "name": "test-youtube",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "dev": "npx --yes hyperframes@0.8.82 preview",
+    "check": "npx --yes hyperframes@0.8.82 check",
+    "render": "npx --yes hyperframes@0.8.82 render",
+    "doctor": "npx --yes hyperframes@0.8.82 doctor",
+    "publish": "npx --yes hyperframes@0.8.82 publish"
+  }
+}
