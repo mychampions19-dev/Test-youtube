@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Texas Killing Fields</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden; background: #000;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #main { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+
+      /* Footage */
+      #push { position: absolute; inset: 0; transform-origin: 50% 40%; }
+      #a-roll { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      #shade {
+        position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(90deg, rgba(0,0,0,.38) 0%, rgba(0,0,0,.16) 30%, rgba(0,0,0,0) 46%);
+      }
+
+      /* Liquid glass card */
+      #panel { position: absolute; inset: 0; pointer-events: none; }
+      #glass {
+        position: absolute; left: 80px; top: 540px; width: 540px; height: 300px;
+        border-radius: 40px; overflow: hidden;
+        background: linear-gradient(145deg, rgba(34,34,40,.70) 0%, rgba(16,16,20,.62) 100%);
+        backdrop-filter: blur(30px) saturate(170%);
+        -webkit-backdrop-filter: blur(30px) saturate(170%);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.45),
+          inset 0 0 0 1px rgba(255,255,255,.14),
+          inset 0 -18px 40px rgba(255,255,255,.04),
+          0 40px 90px rgba(0,0,0,.38),
+          0 8px 24px rgba(0,0,0,.22);
+      }
+      #glass::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+        background: radial-gradient(120% 70% at 12% 0%, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 55%);
+      }
+      #sheen {
+        position: absolute; top: -20%; left: -60%; width: 40%; height: 140%;
+        background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.16) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-18deg); opacity: 0;
+      }
+
+      .scene { position: absolute; left: 0; top: 0; width: 540px; padding: 44px 48px; color: #fff; opacity: 0; }
+      .eyebrow {
+        font-size: 20px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        color: rgba(255,255,255,.72);
+      }
+      .big {
+        font-size: 150px; font-weight: 700; letter-spacing: -.045em; line-height: 1;
+        font-variant-numeric: tabular-nums; margin-top: 14px;
+      }
+      .label { font-size: 38px; font-weight: 600; letter-spacing: -.02em; line-height: 1.12; }
+      .muted { color: rgba(255,255,255,.74); }
+      .red { color: #ff453a; }
+
+      /* Odometer */
+      .odo { display: flex; height: 1em; overflow: hidden; }
+      .odo .col { height: 1em; overflow: hidden; -webkit-mask-image: linear-gradient(transparent 0%, #000 22%, #000 78%, transparent 100%); mask-image: linear-gradient(transparent 0%, #000 22%, #000 78%, transparent 100%); }
+      .odo .strip { display: flex; flex-direction: column; }
+      .odo .strip span { display: block; height: 1em; line-height: 1em; }
+
+      /* Beat 1 */
+      #s1-rule { position: relative; margin-top: 26px; height: 2px; background: rgba(255,255,255,.18); border-radius: 2px; }
+      #s1-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #fff; transform-origin: 0 50%; border-radius: 2px; }
+      #s1-ends { display: flex; justify-content: space-between; margin-top: 12px; font-size: 20px; font-weight: 600; color: rgba(255,255,255,.72); }
+
+      /* Beat 2 */
+      #s2-row { display: flex; align-items: flex-end; gap: 22px; margin-top: 14px; }
+      #s2-row .big { margin-top: 0; }
+      #s2-words { padding-bottom: 16px; }
+      #s2-dots { display: grid; grid-template-columns: repeat(10, 16px); gap: 14px 22px; margin-top: 30px; }
+      #s2-dots i { display: block; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 2px #fff; }
+
+      /* Beat 3 */
+      #s3-head { display: flex; align-items: center; gap: 26px; margin-top: 18px; }
+      #s3-shield { width: 124px; height: 132px; flex: none; }
+      #s3-route { position: relative; margin-top: 30px; height: 170px; }
+      #s3-line { position: absolute; left: 11px; top: 22px; width: 2px; height: 126px; background: linear-gradient(#fff, #ff453a); transform-origin: 50% 0; }
+      .stop { position: absolute; left: 0; display: flex; align-items: center; gap: 22px; }
+      .stop b { display: block; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #fff; background: rgba(20,20,24,.9); }
+      .stop.end b { border-color: #ff453a; }
+      .stop span { font-size: 34px; font-weight: 600; letter-spacing: -.02em; }
+      #s3-houston { top: 10px; }
+      #s3-galveston { top: 136px; }
+
+      /* Beat 4 */
+      #s4-title { margin-top: 16px; font-size: 64px; font-weight: 700; letter-spacing: -.035em; line-height: 1.04; }
+      #s4-title span { display: inline-block; }
+      #s4-under { margin-top: 22px; width: 190px; height: 5px; border-radius: 3px; background: #ff453a; transform-origin: 0 50%; }
+
+      /* Beat 5 */
+      #s5-lead { margin-top: 18px; font-size: 30px; font-weight: 500; line-height: 1.25; }
+      #s5-row { display: flex; align-items: center; gap: 30px; margin-top: 22px; }
+      #s5-one { font-size: 170px; font-weight: 700; letter-spacing: -.05em; line-height: .9; }
+      #s5-words .label { font-size: 44px; }
+    </style>
+  </head>
+  <body>
+    <div id="main" data-composition-id="main" data-duration="12.52" data-width="1920" data-height="1080">
+      <div id="push">
+        <video id="a-roll" class="clip" src="assets/source.mp4" data-start="0" data-duration="12.52" data-track-index="0" muted playsinline></video>
+      </div>
+      <audio id="a-roll-audio" src="assets/source.mp4" data-start="0" data-duration="12.52" data-track-index="1"></audio>
+      <div id="shade" class="clip" data-start="0" data-duration="12.52" data-track-index="2"></div>
+
+      <div id="panel" class="clip" data-start="0" data-duration="12.52" data-track-index="3">
+        <div id="glass">
+          <div id="sheen" data-layout-allow-overflow></div>
+
+          <div id="s1" class="scene">
+            <div class="eyebrow">Since</div>
+            <div class="big odo" data-value="1970"></div>
+            <div id="s1-rule"><div id="s1-fill"></div></div>
+            <div id="s1-ends"><span>1970</span><span>Today</span></div>
+          </div>
+
+          <div id="s2" class="scene">
+            <div class="eyebrow">Up to</div>
+            <div id="s2-row">
+              <div class="big odo" data-value="30"></div>
+              <div id="s2-words">
+                <div class="label" id="s2-young">young women</div>
+                <div class="label red" id="s2-missing">missing</div>
+              </div>
+            </div>
+            <div id="s2-dots"></div>
+          </div>
+
+          <div id="s3" class="scene">
+            <div class="eyebrow">A stretch of</div>
+            <div id="s3-head">
+              <svg id="s3-shield" viewBox="0 0 124 132" aria-hidden="true">
+                <path d="M62 4 C 80 12, 100 12, 116 6 C 122 40, 124 70, 106 96 C 94 112, 78 122, 62 128 C 46 122, 30 112, 18 96 C 0 70, 2 40, 8 6 C 24 12, 44 12, 62 4 Z" fill="#fff" />
+                <path d="M62 14 C 78 21, 96 21, 108 17 C 112 46, 112 70, 98 90 C 88 104, 76 112, 62 118 C 48 112, 36 104, 26 90 C 12 70, 12 46, 16 17 C 28 21, 46 21, 62 14 Z" fill="#1d4ed8" />
+                <path d="M16 17 C 28 21, 46 21, 62 14 C 78 21, 96 21, 108 17 L 110 38 L 14 38 Z" fill="#dc2626" />
+                <text x="62" y="31" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Inter, sans-serif" letter-spacing="1">INTERSTATE</text>
+                <text x="62" y="78" text-anchor="middle" font-size="20" font-weight="700" fill="#fff" font-family="Inter, sans-serif" letter-spacing="2">TEXAS</text>
+              </svg>
+              <div class="big odo" data-value="45" style="margin-top: 0"></div>
+            </div>
+            <div id="s3-route">
+              <div id="s3-line"></div>
+              <div id="s3-houston" class="stop"><b></b><span>Houston</span></div>
+              <div id="s3-galveston" class="stop end"><b></b><span>Galveston</span></div>
+            </div>
+          </div>
+
+          <div id="s4" class="scene">
+            <div class="eyebrow">Known as</div>
+            <div id="s4-title">
+              <span id="s4-a">The Texas</span><br />
+              <span id="s4-b" class="red">Killing</span>
+              <span id="s4-c" class="red">Fields</span>
+            </div>
+            <div id="s4-under"></div>
+          </div>
+
+          <div id="s5" class="scene">
+            <div class="eyebrow">Police believe</div>
+            <div id="s5-lead" class="muted">some could be victims of</div>
+            <div id="s5-row">
+              <div id="s5-one">1</div>
+              <div id="s5-words">
+                <div class="label" id="s5-unknown">unknown</div>
+                <div class="label red" id="s5-killer">serial killer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Build odometer digit strips (two full cycles so every digit visibly rolls).
+      document.querySelectorAll(".odo").forEach((el) => {
+        el.dataset.value.split("").forEach((d) => {
+          const col = document.createElement("div");
+          col.className = "col";
+          const strip = document.createElement("div");
+          strip.className = "strip";
+          strip.dataset.target = String(10 + Number(d));
+          for (let i = 0; i < 20; i++) {
+            const s = document.createElement("span");
+            s.textContent = String(i % 10);
+            strip.appendChild(s);
+          }
+          col.appendChild(strip);
+          col.setAttribute("data-layout-allow-overflow", ""); strip.setAttribute("data-layout-allow-overflow", ""); el.appendChild(col);
+        });
+      });
+      const dots = document.getElementById("s2-dots");
+      for (let i = 0; i < 30; i++) dots.appendChild(document.createElement("i"));
+
+      const tl = gsap.timeline({ paused: true });
+      const soft = "expo.out";
+      const heights = { s1: 318, s2: 372, s3: 296, s3full: 486, s4: 318, s5: 196, s5full: 388 };
+
+      gsap.set("#glass", { yPercent: -50, height: heights.s1 });
+      tl.set("#sheen", { xPercent: 0, opacity: 0 }, 0);
+
+      function roll(sel, at, dur) {
+        document.querySelectorAll(sel + " .strip").forEach((strip, i) => {
+          const d = dur + i * 0.12;
+          tl.set(strip, { yPercent: 0, filter: "blur(9px)", opacity: 0.35 }, 0);
+          tl.fromTo(strip, { yPercent: 0 }, { yPercent: -(Number(strip.dataset.target) / 20) * 100, duration: d, ease: "power4.out", immediateRender: false }, at + i * 0.06);
+          tl.fromTo(strip, { filter: "blur(9px)", opacity: 0.35 }, { filter: "blur(0px)", opacity: 1, duration: d * 0.8, ease: "power3.in", immediateRender: false }, at + i * 0.06);
+        });
+      }
+      function enter(id, at) {
+        tl.fromTo("#" + id, { opacity: 0, y: 18, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: soft }, at);
+      }
+      function leave(id, at) {
+        tl.to("#" + id, { opacity: 0, y: -14, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, at);
+      }
+      function grow(key, at) {
+        tl.to("#glass", { height: heights[key], duration: 0.55, ease: "expo.out" }, at);
+      }
+      function morph(id, at) {
+        tl.to("#glass", { height: heights[id], duration: 0.6, ease: "expo.inOut" }, at);
+        tl.fromTo("#sheen", { xPercent: 0 }, { xPercent: 420, duration: 0.8, ease: "power2.inOut", immediateRender: false }, at);
+        tl.to("#sheen", { keyframes: [{ opacity: 1, duration: 0.3 }, { opacity: 0, duration: 0.3, delay: 0.2 }] }, at);
+      }
+      function pop(sel, at) {
+        tl.fromTo(sel, { opacity: 0, y: 14, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: soft }, at);
+      }
+
+      // Footage: slow push-in, readability shade.
+      tl.fromTo("#push", { scale: 1 }, { scale: 1.05, duration: 12.52, ease: "none" }, 0);
+      tl.fromTo("#shade", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.out" }, 0);
+
+      // Glass arrives: rises out of a blur, slightly oversized, settles.
+      tl.fromTo("#glass",
+        { opacity: 0, x: -60, scale: 0.9, filter: "blur(16px)" },
+        { opacity: 1, x: 0, scale: 1, filter: "blur(0px)", duration: 0.7, ease: soft }, 0);
+
+      // Beat 1: "Since 1970" (since 0.06, nineteen seventy 0.31-1.34)
+      enter("s1", 0.12);
+      roll("#s1 .odo", 0.28, 0.75);
+      tl.fromTo("#s1-fill", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power3.inOut" }, 0.62);
+      leave("s1", 1.24);
+
+      // Beat 2: "up to 30 young women have gone missing" (up 1.34, thirty 1.58, young 1.97, missing 2.79)
+      morph("s2", 1.26);
+      enter("s2", 1.44);
+      tl.set("#s2-young, #s2-missing", { opacity: 0 }, 0);
+      roll("#s2 .odo", 1.5, 0.5);
+      tl.fromTo("#s2-dots i", { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.02 }, 1.6);
+      pop("#s2-young", 1.92);
+      pop("#s2-missing", 2.74);
+      tl.to("#s2-dots i", { backgroundColor: "rgba(255,255,255,0)", boxShadow: "inset 0 0 0 2px rgba(255,69,58,.9)", duration: 0.25, ease: "power1.out", stagger: 0.012 }, 2.8);
+      leave("s2", 3.2);
+
+      // Beat 3: "a stretch of Interstate 45 between Houston and Galveston"
+      // (interstate 3.81, forty five 4.35-5.01, houston 5.30, galveston 5.94)
+      morph("s3", 3.22);
+      enter("s3", 3.42);
+      tl.set("#s3-shield, #s3 .odo, #s3-houston, #s3-galveston", { opacity: 0 }, 0);
+      tl.fromTo("#s3-shield", { opacity: 0, scale: 0.6, rotation: -8 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "back.out(1.6)" }, 3.76);
+      tl.to("#s3 .odo", { opacity: 1, duration: 0.2 }, 4.28);
+      roll("#s3 .odo", 4.28, 0.55);
+      grow("s3full", 5.12);
+      pop("#s3-houston", 5.24);
+      tl.fromTo("#s3-line", { scaleY: 0 }, { scaleY: 1, duration: 0.6, ease: "power3.inOut" }, 5.4);
+      pop("#s3-galveston", 5.88);
+      leave("s3", 6.48);
+
+      // Beat 4: "known as the Texas Killing Fields" (known 6.86, texas 7.21, killing 7.64, fields 7.94)
+      morph("s4", 6.52);
+      enter("s4", 6.7);
+      tl.set("#s4-a, #s4-b, #s4-c", { opacity: 0 }, 0);
+      pop("#s4-a", 7.12);
+      pop("#s4-b", 7.56);
+      pop("#s4-c", 7.88);
+      tl.fromTo("#s4-under", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "expo.out" }, 8.0);
+      leave("s4", 8.42);
+
+      // Beat 5: "police believe some of them could be the victims of a single unknown serial killer"
+      // (police 8.96, some 9.49, single 10.87, unknown 11.32, serial 11.77)
+      morph("s5", 8.44);
+      enter("s5", 8.64);
+      tl.set("#s5-lead, #s5-one, #s5-unknown, #s5-killer", { opacity: 0 }, 0);
+      pop("#s5-lead", 9.42);
+      grow("s5full", 10.66);
+      tl.fromTo("#s5-one", { opacity: 0, scale: 1.5, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: soft }, 10.8);
+      pop("#s5-unknown", 11.26);
+      pop("#s5-killer", 11.72);
+      tl.to("#glass", { scale: 1.02, duration: 0.8, ease: "power2.out" }, 11.72);
+
+      tl.set({}, {}, 12.52);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
