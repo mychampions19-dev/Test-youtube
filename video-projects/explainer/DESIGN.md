@@ -34,6 +34,7 @@ around what she is explaining, and every visual lands on the word that names it
 | 22.8 | "Marketing Studio turns product images or links into finished video ads" | Product tile + link chip -> finished ad playing |
 | 27.8 | "top AI models like Seedance, Kling, Veo, and Sora" | 2x2 model tiles pop on each name |
 | 33.9 | "Getting started is simple" | Four-step preview |
-| 35.4-53.5 | Sign-up walkthrough | Browser: URL types, Sign up click, auth modal (Google / Apple / Microsoft / Email lit as named), 18+ badge, 6-digit code + inbox toast, success, tool grid, start creating |
+| 35.3-53.5 | Sign-up walkthrough | The user's real screen recording in a window, zoomed per beat: address bar, real Sign up click, real sign-up modal (Google / Apple / Microsoft / Email ringed as named), 18+ badge, email-code overlay card, real signed-in homepage (Cinema Studio), real Video tools menu, Generate |
 
-The site UI is an illustrative recreation for the explainer, not a capture.
+The walkthrough is real footage with personal details blurred (see VERIFY.md). Only the
+email 6-digit-code card is an illustrative overlay, since the recording used Google sign-in.

@@ -184,86 +184,48 @@
       .step6 { display: flex; align-items: center; gap: 12px; padding: 14px 22px 14px 14px; border-radius: 999px; background: #17171b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); font-size: 24px; font-weight: 650; opacity: 0; }
       .step6 i { width: 34px; height: 34px; border-radius: 50%; background: #d4ff3a; color: #0b0b0d; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 18px; }
 
-      /* Browser screencast */
-      #browser {
-        position: absolute; left: 80px; top: 70px; width: 1420px; height: 940px; border-radius: 22px; overflow: hidden;
-        background: #0c0c0f; opacity: 0;
-        box-shadow: 0 50px 120px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.1);
+      /* Real screen recording in a window (zoomed by transforming #scr) */
+      #win {
+        position: absolute; left: 60px; top: 205px; width: 1440px; height: 669px; border-radius: 20px; overflow: hidden;
+        background: #000; opacity: 0; z-index: 4;
+        box-shadow: 0 50px 120px rgba(0,0,0,.6);
       }
-      #bar { position: absolute; left: 0; right: 0; top: 0; height: 64px; background: #1a1a1f; border-bottom: 1px solid rgba(255,255,255,.07); }
-      .dot { position: absolute; top: 25px; width: 14px; height: 14px; border-radius: 50%; }
-      #url { position: absolute; left: 380px; right: 380px; top: 13px; height: 38px; border-radius: 10px; background: #0f0f13; display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 18px; font-weight: 500; color: rgba(255,255,255,.9); }
-      #url svg { width: 14px; height: 14px; flex: none; }
-      #url-caret { width: 2px; height: 20px; background: #d4ff3a; }
-      #url-hint { color: rgba(255,255,255,.35); position: absolute; left: 40px; }
-      #load { position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%; background: #d4ff3a; transform-origin: 0 50%; }
-      #page { position: absolute; left: 0; right: 0; top: 64px; bottom: 0; background: #0b0b0e; opacity: 0; overflow: hidden; }
-      #nav { position: absolute; left: 0; right: 0; top: 0; height: 72px; display: flex; align-items: center; padding: 0 40px; border-bottom: 1px solid rgba(255,255,255,.06); }
-      #logo { font-size: 26px; font-weight: 800; letter-spacing: -.04em; display: flex; align-items: center; gap: 10px; }
-      #logo i { width: 26px; height: 26px; border-radius: 8px; background: #d4ff3a; }
-      #links { margin-left: 60px; display: flex; gap: 34px; font-size: 17px; font-weight: 600; color: rgba(255,255,255,.6); }
-      #login { position: absolute; right: 190px; top: 25px; font-size: 17px; font-weight: 600; color: rgba(255,255,255,.75); }
-      #signup { position: absolute; right: 40px; top: 14px; width: 124px; height: 44px; border-radius: 999px; background: #d4ff3a; color: #0b0b0d; font-size: 17px; font-weight: 800; display: grid; place-items: center; }
-      #me { position: absolute; right: 40px; top: 14px; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(160deg, #e9ffb0, #d4ff3a); opacity: 0; }
-      #hero { position: absolute; left: 0; right: 0; top: 72px; bottom: 0; }
-      #hero h2 { position: absolute; left: 80px; top: 110px; font-size: 84px; font-weight: 800; letter-spacing: -.05em; line-height: .98; }
-      #hero p { position: absolute; left: 80px; top: 320px; font-size: 24px; font-weight: 500; color: rgba(255,255,255,.6); }
-      #hero .tiles { position: absolute; left: 80px; right: 80px; top: 440px; display: flex; gap: 20px; }
-      #hero .tiles div { flex: 1; height: 300px; border-radius: 22px; }
-      #t1 { background: linear-gradient(160deg, #1b2a4a, #c46a4a 70%, #120c10 71%); }
-      #t2 { background: radial-gradient(45% 55% at 50% 45%, #e9ffb0, #6d8a14 55%, #10140a); }
-      #t3 { background: radial-gradient(50% 40% at 50% 42%, #ffb07a, #ff5a2a 45%, #2a0b06 80%); }
-      #scrim { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; }
-      #modal { position: absolute; left: 450px; top: 200px; width: 520px; height: 600px; border-radius: 26px; background: #16161a; box-shadow: 0 40px 100px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.1); opacity: 0; overflow: hidden; }
-      .mview { position: absolute; inset: 0; padding: 40px 42px; }
-      .mview h3 { font-size: 34px; font-weight: 800; letter-spacing: -.03em; }
-      .mview p { margin-top: 10px; font-size: 18px; font-weight: 500; color: rgba(255,255,255,.58); line-height: 1.4; }
-      .auth { position: absolute; left: 42px; right: 42px; height: 58px; border-radius: 14px; display: flex; align-items: center; gap: 16px; padding: 0 20px; font-size: 19px; font-weight: 650; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
-      .auth svg { width: 24px; height: 24px; flex: none; }
-      .auth .glow { position: absolute; inset: -3px; border-radius: 17px; box-shadow: 0 0 0 3px #d4ff3a, 0 0 30px rgba(212,255,58,.35); opacity: 0; }
-      #a-google { top: 150px; } #a-apple { top: 222px; } #a-ms { top: 294px; } #a-mail { top: 400px; }
-      #or { position: absolute; left: 42px; right: 42px; top: 368px; text-align: center; font-size: 15px; font-weight: 600; color: rgba(255,255,255,.6); }
-      #age-note { position: absolute; left: 42px; right: 42px; top: 490px; font-size: 16px; font-weight: 500; color: rgba(255,255,255,.45); line-height: 1.4; }
-      #v-mail { opacity: 0; }
-      #codes { position: absolute; left: 62px; top: 210px; display: flex; gap: 12px; }
-      .box { position: relative; width: 56px; height: 70px; border-radius: 14px; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); display: grid; place-items: center; font-size: 34px; font-weight: 800; }
+      #scr { position: absolute; left: 0; top: 0; width: 1886px; height: 876px; transform-origin: 0 0; }
+      #screen { position: absolute; left: 0; top: 0; width: 1886px; height: 876px; }
+      .hl { position: absolute; border-radius: 14px; box-shadow: 0 0 0 4px #d4ff3a, 0 0 44px rgba(212,255,58,.5); opacity: 0; }
+      #tap { position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 4px solid #d4ff3a; opacity: 0; }
+      #win-dim { position: absolute; inset: 0; background: rgba(6,6,8,.72); opacity: 0; }
+      #win-edge { position: absolute; inset: 0; border-radius: 20px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); pointer-events: none; }
+      #win-cap {
+        position: absolute; left: 60px; top: 120px; z-index: 4; opacity: 0; display: flex; align-items: center; gap: 14px;
+        font-size: 26px; font-weight: 700; letter-spacing: -.01em;
+      }
+      #win-cap i { width: 12px; height: 12px; border-radius: 50%; background: #ff453a; box-shadow: 0 0 12px #ff453a; }
+      #win-cap span { color: rgba(255,255,255,.6); font-weight: 600; }
+
+      /* Email-code overlay card (illustrative: the recording used Google sign-in) */
+      #code {
+        position: absolute; left: 520px; top: 300px; width: 520px; padding: 40px 42px 44px; border-radius: 26px; opacity: 0;
+        background: #16161a; box-shadow: 0 40px 100px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12);
+      }
+      #code h3 { font-size: 34px; font-weight: 800; letter-spacing: -.03em; }
+      #code p { margin-top: 10px; font-size: 19px; font-weight: 500; color: rgba(255,255,255,.62); line-height: 1.4; }
+      #codes { display: flex; gap: 12px; margin-top: 30px; }
+      .box { position: relative; width: 60px; height: 74px; border-radius: 14px; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); display: grid; place-items: center; font-size: 36px; font-weight: 800; }
       .box b { opacity: 0; }
-      .box .hl { position: absolute; inset: -2px; border-radius: 16px; box-shadow: 0 0 0 2px #d4ff3a; opacity: 0; }
-      #v-ok { position: absolute; left: 0; right: 0; top: 330px; display: flex; flex-direction: column; align-items: center; opacity: 0; }
-      #v-ok .ok { width: 96px; height: 96px; border-radius: 50%; background: #d4ff3a; display: grid; place-items: center; }
-      #v-ok span { margin-top: 18px; font-size: 26px; font-weight: 800; }
-      #mail-field { position: absolute; left: 42px; right: 42px; top: 330px; height: 56px; border-radius: 14px; background: #1e1e23; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); display: flex; align-items: center; padding: 0 18px; font-size: 18px; color: rgba(255,255,255,.8); }
-      #toast { position: absolute; right: 24px; top: 88px; width: 400px; padding: 18px 20px; border-radius: 18px; background: rgba(38,38,44,.92); box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); display: flex; gap: 16px; align-items: center; opacity: 0; }
+      .box .ring { position: absolute; inset: -2px; border-radius: 16px; box-shadow: 0 0 0 2px #d4ff3a; opacity: 0; }
+      #code-ok { display: flex; align-items: center; gap: 16px; margin-top: 28px; font-size: 24px; font-weight: 800; opacity: 0; }
+      #code-ok i { width: 48px; height: 48px; border-radius: 50%; background: #d4ff3a; display: grid; place-items: center; }
+      #toast { position: absolute; left: 1060px; top: 250px; width: 400px; padding: 18px 20px; border-radius: 18px; background: rgba(38,38,44,.95); box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); display: flex; gap: 16px; align-items: center; opacity: 0; }
       #toast .ic { width: 48px; height: 48px; border-radius: 12px; background: #d4ff3a; display: grid; place-items: center; flex: none; }
       #toast b { display: block; font-size: 16px; font-weight: 700; color: rgba(255,255,255,.7); }
       #toast span { display: block; margin-top: 4px; font-size: 20px; font-weight: 700; }
       #age {
-        position: absolute; left: 70px; top: 330px; width: 300px; padding: 30px; border-radius: 26px; text-align: center; opacity: 0;
-        background: #16161a; box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 0 1px rgba(212,255,58,.35);
+        position: absolute; left: 150px; top: 360px; width: 300px; padding: 30px; border-radius: 26px; text-align: center; opacity: 0;
+        background: rgba(22,22,26,.94); box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 0 1px rgba(212,255,58,.4);
       }
       #age .badge { width: 120px; height: 120px; margin: 0 auto; border-radius: 50%; background: #d4ff3a; color: #0b0b0d; display: grid; place-items: center; font-size: 48px; font-weight: 900; letter-spacing: -.04em; }
       #age span { display: block; margin-top: 18px; font-size: 22px; font-weight: 700; line-height: 1.25; }
-      #home { position: absolute; left: 0; right: 0; top: 72px; bottom: 0; opacity: 0; }
-      #home h2 { position: absolute; left: 74px; top: 70px; font-size: 56px; font-weight: 800; letter-spacing: -.045em; }
-      #home p { position: absolute; left: 74px; top: 150px; font-size: 22px; font-weight: 500; color: rgba(255,255,255,.55); }
-      .tool { position: absolute; top: 230px; width: 300px; height: 330px; border-radius: 22px; overflow: hidden; background: #141417; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); opacity: 0; }
-      .tool .art { height: 220px; }
-      .tool b { display: block; padding: 18px 20px 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
-      .tool span { display: block; padding: 6px 20px 0; font-size: 16px; font-weight: 500; color: rgba(255,255,255,.55); }
-      .tool .ring { position: absolute; inset: 0; border-radius: 22px; box-shadow: inset 0 0 0 3px #d4ff3a; opacity: 0; }
-      #tl1 { left: 74px; } #tl2 { left: 398px; } #tl3 { left: 722px; } #tl4 { left: 1046px; }
-      #tl1 .art { background: linear-gradient(160deg, #1b2a4a, #c46a4a 70%, #120c10 71%); }
-      #tl2 .art { background: radial-gradient(45% 55% at 50% 45%, #e9ffb0, #6d8a14 55%, #10140a); }
-      #tl3 .art { background: radial-gradient(50% 40% at 50% 42%, #ffb07a, #ff5a2a 45%, #2a0b06 80%); }
-      #tl4 .art { background: radial-gradient(50% 50% at 50% 50%, #b48cff, #3a2a6e 55%, #0e0a1a); }
-      #prompt { position: absolute; left: 74px; right: 74px; top: 610px; height: 84px; border-radius: 20px; background: #16161a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 0 0 0 rgba(212,255,58,0); display: flex; align-items: center; padding: 0 16px 0 26px; font-size: 22px; font-weight: 500; opacity: 0; }
-      #prompt-text { color: rgba(255,255,255,.9); white-space: nowrap; overflow: hidden; }
-      #prompt-caret { width: 2px; height: 26px; background: #d4ff3a; margin-left: 2px; }
-      #gen { margin-left: auto; height: 54px; padding: 0 26px; border-radius: 14px; background: #d4ff3a; color: #0b0b0d; font-size: 19px; font-weight: 800; display: grid; place-items: center; }
-
-      #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; }
-      #cursor svg { width: 34px; height: 34px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
-      #ripple { position: absolute; left: -30px; top: -30px; width: 60px; height: 60px; border-radius: 50%; border: 3px solid #d4ff3a; opacity: 0; }
 
       /* Walkthrough step tracker (right column above the PiP) */
       #steps { position: absolute; left: 1545px; top: 90px; width: 320px; opacity: 0; }
@@ -283,6 +245,24 @@
       <div id="cam-ring"></div>
       <audio id="voice" src="assets/source.mp4" data-start="0" data-duration="53.568" data-track-index="1" data-volume="1"></audio>
 
+      <div id="win-cap"><i></i>higgsfield.ai <span>· real walkthrough</span></div>
+      <div id="win">
+        <div id="scr">
+          <video id="screen" class="clip" src="assets/screen-edit.mp4" data-start="35.3" data-duration="18.268" data-track-index="7" muted playsinline></video>
+          <div id="hl-url" class="hl" style="left:138px;top:8px;width:196px;height:38px"></div>
+          <div id="hl-signup" class="hl" style="left:1740px;top:57px;width:82px;height:40px"></div>
+          <div id="hl-google" class="hl" style="left:1018px;top:328px;width:367px;height:64px"></div>
+          <div id="hl-apple" class="hl" style="left:1018px;top:397px;width:367px;height:65px"></div>
+          <div id="hl-ms" class="hl" style="left:1018px;top:467px;width:367px;height:64px"></div>
+          <div id="hl-mail" class="hl" style="left:1018px;top:564px;width:367px;height:65px"></div>
+          <div id="hl-cinema" class="hl" style="left:969px;top:602px;width:422px;height:122px"></div>
+          <div id="hl-cs-item" class="hl" style="left:20px;top:186px;width:364px;height:62px"></div>
+          <div id="hl-gen" class="hl" style="left:1300px;top:754px;width:147px;height:90px"></div>
+          <div id="tap" style="left:1780px;top:77px"></div>
+        </div>
+        <div id="win-dim"></div>
+        <div id="win-edge"></div>
+      </div>
       <div id="ui" class="clip" data-start="0" data-duration="53.568" data-track-index="3">
         <!-- 0: hook -->
         <div id="hook" class="scene">
@@ -392,74 +372,28 @@
           </div>
         </div>
 
-        <!-- 7: browser screencast -->
-        <div id="browser">
-          <div id="bar">
-            <div class="dot" style="left:22px;background:#ff5f57"></div>
-            <div class="dot" style="left:46px;background:#febc2e"></div>
-            <div class="dot" style="left:70px;background:#28c840"></div>
-            <div id="url"><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><span id="url-text"></span><span id="url-caret"></span><span id="url-hint">Search or enter address</span></div>
-            <div id="load"></div>
+        <!-- 7: walkthrough overlays (the real recording is #win, outside #ui) -->
+        <div id="age"><div class="badge">18+</div><span>Available to users aged <span class="lime">18 and over</span></span></div>
+        <div id="code">
+          <h3>Check your inbox</h3>
+          <p>Signing up with email? Enter the<br /><span style="color:#fff">6-digit code</span> we send you.</p>
+          <div id="codes">
+            <div class="box"><b>4</b><div class="ring"></div></div>
+            <div class="box"><b>8</b><div class="ring"></div></div>
+            <div class="box"><b>2</b><div class="ring"></div></div>
+            <div class="box"><b>9</b><div class="ring"></div></div>
+            <div class="box"><b>1</b><div class="ring"></div></div>
+            <div class="box"><b>6</b><div class="ring"></div></div>
           </div>
-          <div id="page">
-            <div id="nav">
-              <div id="logo"><i></i>Higgsfield</div>
-              <div id="links"><span>Explore</span><span>Create</span><span>Pricing</span></div>
-              <div id="login">Log in</div>
-              <div id="signup">Sign up</div>
-              <div id="me"></div>
-            </div>
-            <div id="hero" data-layout-allow-overlap>
-              <h2>Create anything.<br /><span class="lime">No skills required.</span></h2>
-              <p>Video, characters and ads in one AI-native suite.</p>
-              <div class="tiles"><div id="t1"></div><div id="t2"></div><div id="t3"></div></div>
-            </div>
-            <div id="home">
-              <h2>What will you create today?</h2>
-              <p>Pick a tool to get started.</p>
-              <div id="tl1" class="tool"><div class="art"></div><b>Cinema Studio</b><span>Multi-shot cinematic scenes</span><div class="ring"></div></div>
-              <div id="tl2" class="tool"><div class="art"></div><b>Soul ID</b><span>Consistent AI characters</span><div class="ring"></div></div>
-              <div id="tl3" class="tool"><div class="art"></div><b>Marketing Studio</b><span>Products into video ads</span><div class="ring"></div></div>
-              <div id="tl4" class="tool"><div class="art"></div><b>Models</b><span>Seedance, Kling, Veo, Sora</span><div class="ring"></div></div>
-              <div id="prompt"><span id="prompt-text"></span><span id="prompt-caret"></span><div id="gen">Generate</div></div>
-            </div>
-            <div id="scrim"></div>
-            <div id="modal">
-              <div id="v-auth" class="mview">
-                <h3>Create your account</h3>
-                <p>Sign up to start creating.</p>
-                <div id="a-google" class="auth"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.6a4.8 4.8 0 01-2.1 3.1v2.6h3.4c2-1.8 3.1-4.5 3.1-7.6z"/><path fill="#34A853" d="M12 22c2.8 0 5.2-.9 6.9-2.5l-3.4-2.6c-.9.6-2.1 1-3.5 1-2.7 0-5-1.8-5.8-4.3H2.7v2.7A10 10 0 0012 22z"/><path fill="#FBBC05" d="M6.2 13.6a6 6 0 010-3.8V7.1H2.7a10 10 0 000 9z"/><path fill="#EA4335" d="M12 5.9c1.5 0 2.9.5 4 1.5l3-3A10 10 0 002.7 7.1l3.5 2.7C7 7.7 9.3 5.9 12 5.9z"/></svg>Continue with Google<div class="glow"></div></div>
-                <div id="a-apple" class="auth"><svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.9 2.3-1.7 2.9-.4 7.2 1.2 9.5.8 1.1 1.7 2.4 3 2.4 1.2 0 1.6-.8 3.1-.8s1.8.8 3.1.8 2.1-1.2 2.9-2.3c.9-1.3 1.3-2.6 1.3-2.7 0 0-2.6-1-2.7-3.9zM14.1 5.5c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z"/></svg>Continue with Apple<div class="glow"></div></div>
-                <div id="a-ms" class="auth"><svg viewBox="0 0 24 24"><path fill="#F25022" d="M3 3h8.5v8.5H3z"/><path fill="#7FBA00" d="M12.5 3H21v8.5h-8.5z"/><path fill="#00A4EF" d="M3 12.5h8.5V21H3z"/><path fill="#FFB900" d="M12.5 12.5H21V21h-8.5z"/></svg>Continue with Microsoft<div class="glow"></div></div>
-                <div id="or">or</div>
-                <div id="a-mail" class="auth"><svg viewBox="0 0 24 24" fill="none" stroke="#d4ff3a" stroke-width="2.2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Continue with email<div class="glow"></div></div>
-                <div id="age-note">Available to users aged 18 and over.</div>
-              </div>
-              <div id="v-mail" class="mview">
-                <h3>Check your inbox</h3>
-                <p>Enter the 6-digit code we sent to<br /><span style="color:#fff">you@example.com</span></p>
-                <div id="codes">
-                  <div class="box"><b>4</b><div class="hl"></div></div>
-                  <div class="box"><b>8</b><div class="hl"></div></div>
-                  <div class="box"><b>2</b><div class="hl"></div></div>
-                  <div class="box"><b>9</b><div class="hl"></div></div>
-                  <div class="box"><b>1</b><div class="hl"></div></div>
-                  <div class="box"><b>6</b><div class="hl"></div></div>
-                </div>
-                <div id="v-ok"><div class="ok"><svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#0b0b0d" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></div><span>You're in</span></div>
-              </div>
-            </div>
-            <div id="age"><div class="badge">18+</div><span>Available to users aged <span class="lime">18 and over</span></span></div>
-            <div id="toast"><div class="ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#0b0b0d" stroke-width="2.4"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div><div><b>Inbox · Higgsfield</b><span>Your code: 482 916</span></div></div>
-          </div>
-          <div id="cursor"><div id="ripple"></div><svg viewBox="0 0 24 24"><path d="M4 2l16 11-7 1.5L9.5 21z" fill="#fff" stroke="#0b0b0d" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+          <div id="code-ok"><i><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#0b0b0d" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></i>Verified. You're in.</div>
         </div>
+        <div id="toast"><div class="ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#0b0b0d" stroke-width="2.4"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div><div><b>Inbox · Higgsfield</b><span>Your code: 482 916</span></div></div>
 
         <div id="steps">
           <h4>Sign up in 4 steps</h4>
           <div class="st" id="st1"><i>1</i>Go to higgsfield.ai</div>
           <div class="st" id="st2"><i>2</i>Select Sign up</div>
-          <div class="st" id="st3"><i>3</i>Verify your email</div>
+          <div class="st" id="st3"><i>3</i>Choose how to sign up</div>
           <div class="st" id="st4"><i>4</i>Pick a tool</div>
         </div>
       </div>
@@ -473,14 +407,10 @@
       <audio id="sfx-6" src="assets/sfx/whoosh-short.mp3" data-start="22.7" data-duration="0.57" data-track-index="4" data-volume="0.2"></audio>
       <audio id="sfx-7" src="assets/sfx/whoosh-short.mp3" data-start="27.7" data-duration="0.57" data-track-index="4" data-volume="0.2"></audio>
       <audio id="sfx-8" src="assets/sfx/whoosh.mp3" data-start="35.2" data-duration="0.57" data-track-index="4" data-volume="0.28"></audio>
-      <audio id="sfx-9" src="assets/sfx/typing.mp3" data-start="35.8" data-duration="0.9" data-track-index="5" data-volume="0.22"></audio>
       <audio id="sfx-10" src="assets/sfx/click.mp3" data-start="37.28" data-duration="0.37" data-track-index="5" data-volume="0.3"></audio>
       <audio id="sfx-11" src="assets/sfx/pop.mp3" data-start="40.34" data-duration="0.72" data-track-index="5" data-volume="0.2"></audio>
-      <audio id="sfx-12" src="assets/sfx/click.mp3" data-start="45.42" data-duration="0.37" data-track-index="5" data-volume="0.3"></audio>
       <audio id="sfx-13" src="assets/sfx/notification.mp3" data-start="48.3" data-duration="1.2" data-track-index="5" data-volume="0.22"></audio>
       <audio id="sfx-14" src="assets/sfx/chime.mp3" data-start="49.62" data-duration="1.4" data-track-index="6" data-volume="0.18"></audio>
-      <audio id="sfx-15" src="assets/sfx/click-soft.mp3" data-start="51.98" data-duration="0.37" data-track-index="5" data-volume="0.3"></audio>
-      <audio id="sfx-16" src="assets/sfx/typing.mp3" data-start="52.6" data-duration="0.95" data-track-index="5" data-volume="0.18"></audio>
     </div>
 
     <script>
@@ -513,7 +443,7 @@
       // Explicit from-values: computed clip-path strings are normalised by the browser
       // (e.g. to a two-value inset) and would not interpolate cleanly.
       tl.fromTo("#cam", FULL, Object.assign({ duration: 1.0, ease: "expo.inOut", immediateRender: false }, CARD), 3.92);
-      // From the walkthrough on, the footage floats above the browser.
+      // From the walkthrough on, the footage floats above the screen recording.
       tl.set("#cam, #cam-ring", { zIndex: 1 }, 0);
       tl.set("#cam, #cam-ring", { zIndex: 10 }, 35.15);
       tl.fromTo("#cam", CARD, Object.assign({ duration: 1.0, ease: "expo.inOut", immediateRender: false }, PIP), 35.2);
@@ -596,8 +526,23 @@
       pop("#s6 .step6", 34.3, 0.12);
       out("#s6", 35.05);
 
-      // ---- 7. Browser screencast (35.3-53.57) ----
-      tl.fromTo("#browser", { opacity: 0, y: 80, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: E, immediateRender: false }, 35.3);
+      // ---- 7. Real walkthrough (35.3-53.57): assets/screen-edit.mp4 is the user's recording,
+      // blurred for personal details and cut to the narration (see VERIFY.md for the edit list).
+      const BASE = 1440 / 1886; // window width / recording width
+      function focus(px, py, z, at, dur) {
+        const sc = BASE * z;
+        const x = Math.min(0, Math.max(1440 - sc * 1886, 720 - sc * px));
+        const y = Math.min(0, Math.max(669 - sc * 876, 334.5 - sc * py));
+        if (dur) tl.to("#scr", { x, y, scale: sc, duration: dur, ease: "power3.inOut" }, at);
+        else tl.set("#scr", { x, y, scale: sc }, at);
+      }
+      function hl(id, on, off) {
+        tl.fromTo(id, { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out", immediateRender: false }, on);
+        if (off) tl.to(id, { opacity: 0, duration: 0.25 }, off);
+      }
+      tl.set("#scr", { x: 0, y: 0, scale: BASE }, 0);
+      tl.fromTo("#win", { opacity: 0, y: 80, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: E, immediateRender: false }, 35.3);
+      tl.fromTo("#win-cap", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: E, immediateRender: false }, 35.7);
       tl.fromTo("#steps", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: E, immediateRender: false }, 35.9);
       function step(n, at) {
         tl.to("#st" + n, { color: "#fff", duration: 0.25 }, at);
@@ -606,85 +551,53 @@
       }
       step(1, 35.6);
 
-      // URL types "higgsfield.ai" on the spoken word (35.62-36.73)
-      const urlText = "higgsfield.ai";
-      tl.to("#url-hint", { opacity: 0, duration: 0.1 }, 35.6);
-      const typed = { n: 0 };
-      tl.to(typed, { n: urlText.length, duration: 0.95, ease: "none", onUpdate: () => { document.getElementById("url-text").textContent = urlText.slice(0, Math.round(typed.n)); } }, 35.68);
-      tl.to("#load", { scaleX: 1, duration: 0.35, ease: "power2.inOut" }, 36.62);
-      tl.to("#load", { opacity: 0, duration: 0.15 }, 36.98);
-      tl.to("#url-caret", { opacity: 0, duration: 0.1 }, 36.65);
-      tl.to("#page", { opacity: 1, duration: 0.3, ease: "power1.out" }, 36.7);
+      // "Go to higgsfield.ai" -> address bar; "and select sign up" -> Sign up (real click at 37.31)
+      focus(240, 26, 2.4, 35.5, 0.7);
+      hl("#hl-url", 35.75, 36.75);
+      focus(1640, 80, 2.4, 36.65, 0.6);
+      step(2, 36.86);
+      hl("#hl-signup", 36.95, 37.6);
+      tl.fromTo("#tap", { opacity: 1, scale: 0.3 }, { opacity: 0, scale: 1.6, duration: 0.5, ease: "power2.out", immediateRender: false }, 37.31);
 
-      // Cursor: move to Sign up and click on "sign up"
-      function clickAt(at) {
-        tl.fromTo("#ripple", { opacity: 1, scale: 0.3 }, { opacity: 0, scale: 1.6, duration: 0.5, ease: "power2.out", immediateRender: false }, at);
-        tl.to("#cursor svg", { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1, transformOrigin: "0 0" }, at);
-      }
-      tl.set("#cursor", { x: 820, y: 700 }, 0);
-      tl.to("#cursor", { opacity: 1, duration: 0.2 }, 36.8);
-      tl.to("#cursor", { x: 1318, y: 100, duration: 0.45, ease: "power2.inOut" }, 36.82);
-      clickAt(37.3);
-      tl.to("#signup", { scale: 0.94, duration: 0.08, yoyo: true, repeat: 1 }, 37.3);
-      step(2, 37.25);
-
-      // Modal
-      tl.to("#scrim", { opacity: 1, duration: 0.35 }, 37.5);
-      tl.to("#hero h2, #hero p", { opacity: 0, duration: 0.3 }, 37.5);
-      tl.to("#hero .tiles", { opacity: 0.4, duration: 0.35 }, 37.5);
-      tl.to("#signup, #login", { opacity: 0, duration: 0.3 }, 37.6);
-      tl.fromTo("#modal", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: E, immediateRender: false }, 37.55);
-      tl.to("#cursor", { x: 1080, y: 520, duration: 0.6, ease: "power2.inOut" }, 37.9);
-
-      // 18+ on "18" (40.36)
+      // Sign-up modal (real; opens at 37.9). "18 and over" -> badge
+      focus(1200, 470, 1.3, 37.5, 0.8);
       tl.fromTo("#age", { opacity: 0, x: -30, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.55, ease: "back.out(1.6)", immediateRender: false }, 40.3);
-      tl.to("#age-note", { color: "#d4ff3a", duration: 0.3 }, 40.36);
-      tl.to("#age", { opacity: 0, x: -20, duration: 0.3, ease: "power2.in" }, 41.45);
+      tl.to("#age", { opacity: 0, x: -20, duration: 0.3, ease: "power2.in" }, 41.4);
 
-      // Providers light up as named
-      function glow(id, at, hold) {
-        tl.to(id + " .glow", { opacity: 1, duration: 0.2 }, at);
-        if (hold) tl.to(id + " .glow", { opacity: 0, duration: 0.25 }, at + hold);
-      }
-      glow("#a-google", 42.55, 0.5);
-      glow("#a-apple", 43.03, 0.48);
-      glow("#a-ms", 43.5, 0.8);
-      glow("#a-mail", 44.32, 1.4);
-      tl.to("#cursor", { x: 690, y: 684, duration: 0.55, ease: "power2.inOut" }, 44.4);
-      clickAt(45.42);
-      step(3, 45.42);
+      // "Google, Apple, Microsoft, or email" -> each real button lights up
+      step(3, 41.6);
+      focus(1200, 478, 2.0, 41.55, 0.7);
+      hl("#hl-google", 42.55, 43.0);
+      hl("#hl-apple", 43.03, 43.48);
+      hl("#hl-ms", 43.5, 44.28);
+      hl("#hl-mail", 44.32, 46.2);
 
-      // Email view: code boxes, inbox toast, digits, success
-      tl.to("#v-auth", { opacity: 0, x: -30, duration: 0.3, ease: "power2.in" }, 45.62);
-      tl.fromTo("#v-mail", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.45, ease: E, immediateRender: false }, 45.8);
-      tl.to("#cursor", { x: 1040, y: 760, duration: 0.6, ease: "power2.inOut" }, 45.9);
-      tl.to("#codes .hl", { opacity: 1, duration: 0.12, stagger: 0.1 }, 46.68);
-      tl.to("#codes .hl", { opacity: 0, duration: 0.2, stagger: 0.05 }, 47.4);
-      tl.fromTo("#toast", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.5, ease: E, immediateRender: false }, 48.34);
-      tl.fromTo("#codes b", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.2, ease: "power2.out", stagger: 0.08, immediateRender: false }, 48.95);
-      tl.to("#toast", { opacity: 0, y: -16, duration: 0.3 }, 49.6);
-      tl.to("#codes", { opacity: 0, y: -10, duration: 0.25 }, 49.55);
-      tl.fromTo("#v-ok", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)", immediateRender: false }, 49.62);
+      // "If you use email, just enter the six-digit verification code sent to your inbox to finish"
+      focus(1200, 596, 2.6, 45.0, 0.8);
+      tl.to("#win-dim", { opacity: 1, duration: 0.4 }, 46.15);
+      tl.fromTo("#code", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: E, immediateRender: false }, 46.2);
+      tl.to("#codes .ring", { opacity: 1, duration: 0.12, stagger: 0.1 }, 46.68);
+      tl.to("#codes .ring", { opacity: 0, duration: 0.2, stagger: 0.05 }, 47.45);
+      tl.fromTo("#toast", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: E, immediateRender: false }, 48.34);
+      tl.fromTo("#codes b", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.2, ease: "power2.out", stagger: 0.08, immediateRender: false }, 48.9);
+      tl.to("#toast", { opacity: 0, x: 20, duration: 0.3 }, 49.45);
+      tl.fromTo("#code-ok", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(2)", immediateRender: false }, 49.4);
+      tl.to("#code", { opacity: 0, y: -20, scale: 0.97, duration: 0.3, ease: "power2.in" }, 49.72);
+      tl.to("#win-dim", { opacity: 0, duration: 0.3 }, 49.75);
 
-      // Signed in: homepage with tools
-      tl.to("#modal", { opacity: 0, scale: 0.96, duration: 0.3, ease: "power2.in" }, 50.05);
-      tl.to("#scrim", { opacity: 0, duration: 0.35 }, 50.1);
-      tl.to("#hero", { opacity: 0, duration: 0.25 }, 50.1);
-      tl.to("#me", { opacity: 1, duration: 0.3 }, 50.3);
-      tl.to("#home", { opacity: 1, duration: 0.3 }, 50.25);
-      pop("#home .tool", 50.35, 0.08);
+      // "Once you're signed in" -> real signed-in homepage (cut at 50.0)
+      focus(943, 438, 1, 49.95, 0);
+      tl.fromTo("#win", { filter: "brightness(1.6) blur(8px)" }, { filter: "brightness(1) blur(0px)", duration: 0.45, ease: "power2.out", immediateRender: false }, 50.0);
+      // "pick a tool from the homepage" -> tool cards, Cinema Studio
       step(4, 51.05);
-      tl.to("#cursor", { x: 230, y: 470, duration: 0.6, ease: "power2.inOut" }, 51.05);
-      tl.to("#tl1", { y: -8, duration: 0.3, ease: "power2.out" }, 51.5);
-      tl.to("#tl1 .ring", { opacity: 1, duration: 0.2 }, 51.5);
-      clickAt(51.98);
-      tl.to("#tl2, #tl3, #tl4", { opacity: 0.35, duration: 0.3 }, 52.05);
-      tl.fromTo("#prompt", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: E, immediateRender: false }, 52.3);
-      tl.to("#cursor", { opacity: 0, duration: 0.2 }, 52.3);
-      const pText = "A cinematic drone shot over neon Tokyo at night";
-      const pt = { n: 0 };
-      tl.to(pt, { n: pText.length, duration: 1.0, ease: "none", onUpdate: () => { document.getElementById("prompt-text").textContent = pText.slice(0, Math.round(pt.n)); } }, 52.55);
-      tl.to("#gen", { boxShadow: "0 0 36px rgba(212,255,58,.7)", duration: 0.4, yoyo: true, repeat: 1 }, 52.75);
+      focus(1180, 640, 1.9, 51.0, 0.7);
+      hl("#hl-cinema", 51.3, 51.85);
+      // "and start creating" -> real Video tools menu (cut at 51.9), then Generate
+      focus(620, 420, 1.35, 51.9, 0);
+      hl("#hl-cs-item", 52.05, 52.5);
+      focus(1300, 720, 2.0, 52.45, 0.6);
+      hl("#hl-gen", 52.8);
+      tl.to("#hl-gen", { boxShadow: "0 0 0 4px #d4ff3a, 0 0 70px rgba(212,255,58,.8)", duration: 0.35, yoyo: true, repeat: 1 }, 53.0);
 
       tl.set({}, {}, 53.568);
       window.__timelines = window.__timelines || {};
