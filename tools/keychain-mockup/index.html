@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keychain Mockup Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#f4f1ec;--panel:#fff;--ink:#222;--muted:#777;--line:#ddd;--accent:#2b6cb0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--panel:#222326;--ink:#eee;--muted:#999;--line:#3a3b3e;--accent:#6aa9ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
+header{padding:14px 16px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0}
+header p{margin:4px 0 0;color:var(--muted)}
+main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
+@media (max-width:820px){main{grid-template-columns:1fr}}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:14px;align-self:start}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
+legend{font-weight:600;padding:0 4px}
+label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0}
+input[type=color]{width:44px;height:28px;border:none;background:none;padding:0}
+input[type=text],select{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+button{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer;font:inherit}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.swatches button{width:28px;height:28px;padding:0;border-radius:50%}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){.stage{grid-template-columns:1fr}}
+.stage canvas{width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}
+#queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-top:12px}
+#queue img{width:100%;aspect-ratio:1;object-fit:contain;border:2px solid var(--line);border-radius:6px;cursor:pointer;background:#fff}
+#queue img.on{border-color:var(--accent)}
+small{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Keychain Mockup Studio</h1>
+  <p>Drop in club badges, recolour the fan, then export Etsy listing images one at a time or in bulk.</p>
+</header>
+<main>
+<aside>
+  <fieldset><legend>1. Badges</legend>
+    <input type="file" id="files" accept="image/*" multiple>
+    <small>Pick one or many. Click a thumbnail to edit it. Transparent PNGs work best.</small>
+    <label>Auto-colour fan from badge <input type="checkbox" id="auto" checked></label>
+    <label>Badge zoom <input type="range" id="zoom" min="0.6" max="1.4" step="0.01" value="1"></label>
+  </fieldset>
+  <fieldset><legend>2. Fan colours</legend>
+    <label>Beanie <input type="color" id="c_hat" value="#4aa3e6"></label>
+    <label>Shirt <input type="color" id="c_shirt" value="#4aa3e6"></label>
+    <label>Collar / sash <input type="color" id="c_trim" value="#ffffff"></label>
+    <label>Skin <input type="color" id="c_skin" value="#e9b07a"></label>
+    <label>Outline <input type="color" id="c_line" value="#1e1a17"></label>
+    <div class="row swatches" id="presets"></div>
+    <small>Presets: sky, red, navy, claret, black/white, green, yellow, orange.</small>
+  </fieldset>
+  <fieldset><legend>3. Back plate</legend>
+    <input type="text" id="msg" value="Custom message">
+    <label>Wood <select id="wood"><option value="#d9a066">Beech</option><option value="#b97a45">Cherry</option><option value="#7b4f2c">Walnut</option><option value="#e8c89a">Maple</option></select></label>
+  </fieldset>
+  <fieldset><legend>4. Export</legend>
+    <div class="row">
+      <button id="dlFront">Front PNG</button>
+      <button id="dlBack">Back PNG</button>
+      <button id="dlCombo">Side-by-side</button>
+    </div>
+    <p></p>
+    <button class="primary" id="bulk">Bulk export all badges (ZIP)</button>
+    <small id="status"></small>
+  </fieldset>
+</aside>
+<section>
+  <div class="stage"><canvas id="front" width="1500" height="1500"></canvas><canvas id="back" width="1500" height="1500"></canvas></div>
+  <div id="queue"></div>
+</section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const S = 1500, C = S/2, R = 600;               // canvas size, centre, disc radius
+const PRESETS = [
+  ['#4aa3e6','#4aa3e6','#ffffff'],['#d7192d','#d7192d','#ffffff'],['#1c2c5b','#1c2c5b','#ffffff'],
+  ['#7a263a','#7a263a','#87c5f0'],['#111111','#111111','#ffffff'],['#1f8a3b','#1f8a3b','#ffffff'],
+  ['#f6d10a','#f6d10a','#111111'],['#f26b1d','#f26b1d','#111111']];
+let items = [];   // {name, img, colors}
+let current = -1;
+
+// ---------- presets ----------
+PRESETS.forEach(p => {
+  const b = document.createElement('button');
+  b.style.background = `linear-gradient(135deg,${p[0]} 60%,${p[2]} 60%)`;
+  b.onclick = () => { setColors({hat:p[0],shirt:p[1],trim:p[2]}); };
+  $('presets').appendChild(b);
+});
+function getColors(){return {hat:$('c_hat').value,shirt:$('c_shirt').value,trim:$('c_trim').value,skin:$('c_skin').value,line:$('c_line').value};}
+function setColors(c){for(const k in c) if($('c_'+k)) $('c_'+k).value=c[k]; if(items[current]) items[current].colors=getColors(); draw();}
+
+// ---------- dominant colour extraction ----------
+function hex(r,g,b){return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
+function extractColors(img){
+  const c=document.createElement('canvas'); c.width=c.height=80;
+  const x=c.getContext('2d'); x.drawImage(img,0,0,80,80);
+  const d=x.getImageData(0,0,80,80).data, bins={};
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3]<200) continue;
+    const [r,g,b]=[d[i],d[i+1],d[i+2]], mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    const sat = mx ? (mx-mn)/mx : 0;
+    const key=(r>>5)+','+(g>>5)+','+(b>>5);
+    const w = sat>0.35 && mx>50 ? 3 : (mx>230||mx<30 ? 0.2 : 1);   // favour saturated club colours
+    (bins[key] ||= {n:0,r:0,g:0,b:0,w:0});
+    const o=bins[key]; o.n++; o.w+=w; o.r+=r; o.g+=g; o.b+=b;
+  }
+  const s=Object.values(bins).sort((a,b)=>b.w-a.w).map(o=>[o.r/o.n|0,o.g/o.n|0,o.b/o.n|0]);
+  const main=s[0]||[74,163,230];
+  const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+  const second=s.find(c=>dist(c,main)>120)||[255,255,255];
+  return {hat:hex(...main),shirt:hex(...main),trim:hex(...second)};
+}
+
+// ---------- drawing helpers ----------
+function shade(h,amt){const n=parseInt(h.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;
+  const f=v=>Math.max(0,Math.min(255,Math.round(v+amt*255)));return hex(f(r),f(g),f(b));}
+function backdrop(x){
+  const g=x.createLinearGradient(0,0,S,S); g.addColorStop(0,'#cfcac4'); g.addColorStop(1,'#9e9893');
+  x.fillStyle=g; x.fillRect(0,0,S,S);
+  for(let i=0;i<4000;i++){x.fillStyle=`rgba(255,255,255,${Math.random()*.05})`;x.fillRect(Math.random()*S,Math.random()*S,2,2);}
+}
+function woodDisc(x,wood,seed){
+  // shadow
+  x.save(); x.shadowColor='rgba(0,0,0,.45)'; x.shadowBlur=60; x.shadowOffsetX=25; x.shadowOffsetY=35;
+  x.beginPath(); x.arc(C,C+20,R,0,7); x.fillStyle=shade(wood,-.25); x.fill(); x.restore();
+  // edge thickness
+  x.beginPath(); x.arc(C,C+20,R,0,7); x.fillStyle=shade(wood,-.22); x.fill();
+  x.save(); x.beginPath(); x.arc(C,C,R,0,7); x.clip();
+  x.fillStyle=wood; x.fillRect(0,0,S,S);
+  let r=seed; const rnd=()=>(r=(r*9301+49297)%233280)/233280;
+  for(let i=0;i<140;i++){const y=rnd()*S; x.strokeStyle=`rgba(90,50,20,${.04+rnd()*.08})`; x.lineWidth=1+rnd()*3;
+    x.beginPath(); x.moveTo(0,y); for(let k=0;k<=S;k+=50) x.lineTo(k,y+Math.sin(k/180+i)*8+rnd()*3); x.stroke();}
+  const hl=x.createRadialGradient(C-250,C-300,50,C,C,R*1.1); hl.addColorStop(0,'rgba(255,255,255,.25)'); hl.addColorStop(1,'rgba(0,0,0,.12)');
+  x.fillStyle=hl; x.fillRect(0,0,S,S); x.restore();
+  x.beginPath(); x.arc(C,C,R,0,7); x.strokeStyle='rgba(60,30,10,.5)'; x.lineWidth=4; x.stroke();
+}
+function ring(x, holeCut){
+  // key-ring hole + metal ring at top
+  const hy=C-R+55;
+  x.beginPath(); x.arc(C,hy,26,0,7); x.fillStyle='#3b2615'; x.fill();
+  x.save(); x.lineWidth=22; const g=x.createLinearGradient(C-120,0,C+120,0); g.addColorStop(0,'#777'); g.addColorStop(.5,'#eee'); g.addColorStop(1,'#666');
+  x.strokeStyle=g; x.beginPath(); x.ellipse(C,hy-70,34,90,0,0,7); x.stroke();
+  x.beginPath(); x.ellipse(C,-140,260,170,0,0,7); x.stroke(); x.restore();
+}
+function fan(x,col){
+  const L=col.line, lw=14;
+  const P=(f,fill)=>{x.beginPath(); f(); x.fillStyle=fill; x.fill(); x.lineWidth=lw; x.strokeStyle=L; x.lineJoin='round'; x.stroke();};
+  const bx=C, by=C;
+  // shirt
+  P(()=>{x.moveTo(bx-370,by+520); x.quadraticCurveTo(bx-360,by+230,bx-170,by+190); x.lineTo(bx+170,by+190);
+    x.quadraticCurveTo(bx+360,by+230,bx+370,by+520); x.closePath();}, col.shirt);
+  // sash
+  x.save(); x.beginPath(); x.moveTo(bx-370,by+520); x.quadraticCurveTo(bx-360,by+230,bx-170,by+190); x.lineTo(bx+170,by+190);
+  x.quadraticCurveTo(bx+360,by+230,bx+370,by+520); x.closePath(); x.clip();
+  x.fillStyle=col.trim; x.beginPath(); x.moveTo(bx+240,by+200); x.lineTo(bx+310,by+220); x.lineTo(bx+130,by+560); x.lineTo(bx+50,by+560); x.fill();
+  x.fillStyle=shade(col.shirt,.15); x.beginPath(); x.moveTo(bx+320,by+225); x.lineTo(bx+350,by+250); x.lineTo(bx+200,by+560); x.lineTo(bx+160,by+560); x.fill();
+  x.restore();
+  // neck + collar
+  P(()=>{x.moveTo(bx-80,by+90); x.lineTo(bx-80,by+200); x.quadraticCurveTo(bx,by+260,bx+80,by+200); x.lineTo(bx+80,by+90); x.closePath();}, col.skin);
+  x.beginPath(); x.moveTo(bx-170,by+190); x.quadraticCurveTo(bx,by+330,bx+170,by+190); x.lineWidth=40; x.strokeStyle=L; x.stroke();
+  x.lineWidth=24; x.strokeStyle=col.trim; x.stroke();
+  // ears + head
+  P(()=>{x.ellipse(bx-190,by-30,40,60,0,0,7);}, col.skin);
+  P(()=>{x.ellipse(bx,by-10,190,220,0,0,7);}, col.skin);
+  // beanie
+  P(()=>{x.moveTo(bx-200,by-110); x.bezierCurveTo(bx-220,by-470,bx+220,by-470,bx+200,by-110); x.closePath();}, col.hat);
+  P(()=>{x.roundRect(bx-245,by-170,490,120,50);}, shade(col.hat,-.04));
+  x.save(); x.globalAlpha=.25; x.strokeStyle=shade(col.hat,-.3); x.lineWidth=6;
+  for(let i=-200;i<=200;i+=40){x.beginPath(); x.moveTo(bx+i,by-160); x.lineTo(bx+i,by-60); x.stroke();} x.restore();
+}
+function drawFront(x,item,col,zoom){
+  backdrop(x); ring(x); woodDisc(x,$('wood').value,7); ring(x);
+  const ir=R-55;
+  x.save(); x.beginPath(); x.arc(C,C,ir,0,7); x.clip();
+  x.fillStyle='#fff'; x.fillRect(0,0,S,S);
+  if(item){ const im=item.img, s=Math.max(ir*2/im.width, ir*2/im.height)*zoom;
+    x.drawImage(im,C-im.width*s/2,C-im.height*s/2,im.width*s,im.height*s); }
+  else { x.fillStyle='#bbb'; x.font='600 54px system-ui'; x.textAlign='center'; x.fillText('Upload a badge',C,C-380); }
+  fan(x,col);
+  x.restore();
+  x.beginPath(); x.arc(C,C,ir,0,7); x.lineWidth=10; x.strokeStyle='#2a1a10'; x.stroke();
+  // hole on top of art
+  x.beginPath(); x.arc(C,C-R+55,26,0,7); x.fillStyle='#3b2615'; x.fill();
+  ringFront(x);
+}
+function ringFront(x){const hy=C-R+55; x.save(); x.lineWidth=22; const g=x.createLinearGradient(C-40,0,C+40,0);
+  g.addColorStop(0,'#666'); g.addColorStop(.5,'#f2f2f2'); g.addColorStop(1,'#666'); x.strokeStyle=g;
+  x.beginPath(); x.ellipse(C,hy-70,34,90,0,-1.2,1.2); x.stroke(); x.restore();}
+function drawBack(x,msg){
+  backdrop(x); ring(x); woodDisc(x,$('wood').value,13);
+  x.beginPath(); x.arc(C,C-R+55,26,0,7); x.fillStyle='#3b2615'; x.fill(); ringFront(x);
+  const w=820,h=230,px=C-w/2,py=C-h/2;
+  x.save(); x.translate(C,C); x.rotate(-.05); x.translate(-C,-C);
+  x.fillStyle='rgba(50,25,10,.6)'; x.beginPath(); x.roundRect(px-14,py-14,w+28,h+28,30); x.fill();
+  const g=x.createLinearGradient(px,py,px+w,py+h); g.addColorStop(0,'#8d9196'); g.addColorStop(.45,'#e6e8ea'); g.addColorStop(.55,'#c4c7ca'); g.addColorStop(1,'#7d8186');
+  x.fillStyle=g; x.beginPath(); x.roundRect(px,py,w,h,22); x.fill();
+  for(let i=0;i<h;i+=3){x.fillStyle=`rgba(255,255,255,${Math.random()*.07})`; x.fillRect(px,py+i,w,1);}
+  x.fillStyle='#2c2c2c'; x.textAlign='center'; x.textBaseline='middle';
+  let fs=96; do{ x.font=`500 ${fs}px system-ui,Segoe UI,sans-serif`; fs-=4; } while(x.measureText(msg).width>w-80 && fs>30);
+  x.fillText(msg,C,C+4); x.restore();
+}
+function draw(){
+  const item=items[current], col=item?item.colors:getColors();
+  drawFront($('front').getContext('2d'),item,col,+$('zoom').value);
+  drawBack($('back').getContext('2d'),$('msg').value);
+}
+
+// ---------- inputs ----------
+['c_hat','c_shirt','c_trim','c_skin','c_line'].forEach(id=>$(id).oninput=()=>{if(items[current]) items[current].colors=getColors(); draw();});
+['zoom','msg','wood'].forEach(id=>$(id).oninput=draw);
+$('files').onchange=async e=>{
+  for(const f of e.target.files){
+    const url=URL.createObjectURL(f), img=new Image(); img.src=url; await img.decode();
+    const base=getColors(); const colors=$('auto').checked?{...base,...extractColors(img)}:base;
+    items.push({name:f.name.replace(/\.[^.]+$/,''),img,url,colors});
+  }
+  select(items.length-e.target.files.length); renderQueue();
+};
+function select(i){current=i; const c=items[i].colors; for(const k in c) $('c_'+k).value=c[k]; renderQueue(); draw();}
+function renderQueue(){ $('queue').innerHTML=''; items.forEach((it,i)=>{const im=document.createElement('img'); im.src=it.url; im.title=it.name;
+  if(i===current) im.className='on'; im.onclick=()=>select(i); $('queue').appendChild(im);});}
+
+// ---------- export ----------
+const blob=c=>new Promise(r=>c.toBlob(r,'image/png'));
+function save(b,name){const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+function combo(){const c=document.createElement('canvas'); c.width=S*2+40; c.height=S; const x=c.getContext('2d');
+  x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage($('front'),0,0); x.drawImage($('back'),S+40,0); return c;}
+const nm=()=>(items[current]?.name||'keychain');
+$('dlFront').onclick=async()=>save(await blob($('front')),nm()+'-front.png');
+$('dlBack').onclick=async()=>save(await blob($('back')),nm()+'-back.png');
+$('dlCombo').onclick=async()=>save(await blob(combo()),nm()+'-listing.png');
+$('bulk').onclick=async()=>{
+  if(!items.length) return alert('Upload some badges first.');
+  if(!window.JSZip) return alert('ZIP library failed to load; check your connection.');
+  const zip=new JSZip(), keep=current;
+  for(let i=0;i<items.length;i++){
+    current=i; draw(); $('status').textContent=`Rendering ${i+1}/${items.length}…`;
+    const n=items[i].name;
+    zip.file(`${n}/${n}-front.png`,await blob($('front')));
+    zip.file(`${n}/${n}-back.png`,await blob($('back')));
+    zip.file(`${n}/${n}-listing.png`,await blob(combo()));
+  }
+  select(keep); $('status').textContent='Zipping…';
+  save(await zip.generateAsync({type:'blob'}),'keychain-mockups.zip'); $('status').textContent=`Done: ${items.length} badges.`;
+};
+draw();
+</script>
+</body>
+</html>
