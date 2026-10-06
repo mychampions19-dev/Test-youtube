@@ -43,8 +43,9 @@ small{color:var(--muted)}
 <aside>
   <fieldset><legend>1. Badges</legend>
     <input type="file" id="files" accept="image/*" multiple>
-    <small>Pick one or many. Click a thumbnail to edit it. Transparent PNGs work best.</small>
+    <small>Pick or drag in one or many. Click a thumbnail to edit it. Transparent PNGs work best.</small>
     <label>Auto-colour fan from badge <input type="checkbox" id="auto" checked></label>
+    <label>Raised depth <input type="range" id="depth" min="0" max="30" step="1" value="14"></label>
     <label>Badge zoom <input type="range" id="zoom" min="0.6" max="1.4" step="0.01" value="1"></label>
   </fieldset>
   <fieldset><legend>2. Fan colours</legend>
@@ -175,6 +176,24 @@ function fan(x,col){
   x.save(); x.globalAlpha=.25; x.strokeStyle=shade(col.hat,-.3); x.lineWidth=6;
   for(let i=-200;i<=200;i+=40){x.beginPath(); x.moveTo(bx+i,by-160); x.lineTo(bx+i,by-60); x.stroke();} x.restore();
 }
+function raisedFan(x,col,ir){
+  const L=document.createElement('canvas'); L.width=L.height=S; const lx=L.getContext('2d');
+  lx.beginPath(); lx.arc(C,C,ir,0,7); lx.clip(); fan(lx,col);
+  // silhouette in dark wood for the cut edge
+  const E=document.createElement('canvas'); E.width=E.height=S; const ex=E.getContext('2d');
+  ex.drawImage(L,0,0); ex.globalCompositeOperation='source-in'; ex.fillStyle=shade($('wood').value,-.35); ex.fillRect(0,0,S,S);
+  const D=+$('depth').value;
+  x.save(); x.beginPath(); x.arc(C,C,ir,0,7); x.clip();
+  x.save(); x.shadowColor='rgba(0,0,0,.55)'; x.shadowBlur=D*2.2; x.shadowOffsetX=D*.9; x.shadowOffsetY=D*1.3;
+  x.drawImage(E,D*.6,D); x.restore();
+  for(let i=D;i>0;i-=1) x.drawImage(E,i*.6,i);          // wood thickness of the raised layer
+  x.drawImage(L,0,0);
+  // bevel: soft top-left light, bottom-right shade
+  const H=document.createElement('canvas'); H.width=H.height=S; const hx=H.getContext('2d');
+  const g=hx.createLinearGradient(C-400,C-500,C+300,C+500); g.addColorStop(0,'rgba(255,255,255,.28)'); g.addColorStop(.5,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(0,0,0,.18)');
+  hx.fillStyle=g; hx.fillRect(0,0,S,S); hx.globalCompositeOperation='destination-in'; hx.drawImage(L,0,0);
+  x.drawImage(H,0,0); x.restore();
+}
 function drawFront(x,item,col,zoom){
   backdrop(x); ring(x); woodDisc(x,$('wood').value,7); ring(x);
   const ir=R-55;
@@ -183,8 +202,11 @@ function drawFront(x,item,col,zoom){
   if(item){ const im=item.img, s=Math.max(ir*2/im.width, ir*2/im.height)*zoom;
     x.drawImage(im,C-im.width*s/2,C-im.height*s/2,im.width*s,im.height*s); }
   else { x.fillStyle='#bbb'; x.font='600 54px system-ui'; x.textAlign='center'; x.fillText('Upload a badge',C,C-380); }
-  fan(x,col);
+  // inner shadow so the badge looks recessed
+  const ig=x.createRadialGradient(C,C,ir*.82,C,C,ir); ig.addColorStop(0,'rgba(0,0,0,0)'); ig.addColorStop(1,'rgba(0,0,0,.28)');
+  x.fillStyle=ig; x.fillRect(0,0,S,S);
   x.restore();
+  raisedFan(x,col,ir);
   x.beginPath(); x.arc(C,C,ir,0,7); x.lineWidth=10; x.strokeStyle='#2a1a10'; x.stroke();
   // hole on top of art
   x.beginPath(); x.arc(C,C-R+55,26,0,7); x.fillStyle='#3b2615'; x.fill();
@@ -214,15 +236,24 @@ function draw(){
 
 // ---------- inputs ----------
 ['c_hat','c_shirt','c_trim','c_skin','c_line'].forEach(id=>$(id).oninput=()=>{if(items[current]) items[current].colors=getColors(); draw();});
-['zoom','msg','wood'].forEach(id=>$(id).oninput=draw);
-$('files').onchange=async e=>{
-  for(const f of e.target.files){
-    const url=URL.createObjectURL(f), img=new Image(); img.src=url; await img.decode();
-    const base=getColors(); const colors=$('auto').checked?{...base,...extractColors(img)}:base;
-    items.push({name:f.name.replace(/\.[^.]+$/,''),img,url,colors});
+['zoom','msg','wood','depth'].forEach(id=>$(id).oninput=draw);
+async function addFiles(files){
+  const start=items.length, bad=[];
+  for(const f of files){
+    try{
+      const url=URL.createObjectURL(f), img=new Image(); img.src=url; await img.decode();
+      const base=getColors(); const colors=$('auto').checked?{...base,...contrastFix(extractColors(img))}:base;
+      items.push({name:f.name.replace(/\.[^.]+$/,''),img,url,colors});
+    }catch(err){ bad.push(f.name); }
   }
-  select(items.length-e.target.files.length); renderQueue();
-};
+  $('status').textContent = bad.length ? `Couldn't read: ${bad.join(', ')} (use PNG, JPG or WEBP; iPhone HEIC won't open in browsers)` : '';
+  if(items.length>start) select(start);
+}
+$('files').onchange=e=>{ addFiles([...e.target.files]); e.target.value=''; };
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault(); addFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')||/\.(png|jpe?g|webp|gif|svg)$/i.test(f.name)));});
+// keep the fan's shirt distinct from the badge's main colour so it pops
+function contrastFix(c){ return {hat:c.hat, shirt:c.hat, trim:c.trim}; }
 function select(i){current=i; const c=items[i].colors; for(const k in c) $('c_'+k).value=c[k]; renderQueue(); draw();}
 function renderQueue(){ $('queue').innerHTML=''; items.forEach((it,i)=>{const im=document.createElement('img'); im.src=it.url; im.title=it.name;
   if(i===current) im.className='on'; im.onclick=()=>select(i); $('queue').appendChild(im);});}
